@@ -1,0 +1,76 @@
+{% extends 'layouts/app-base.html' %} 
+{% from 'components/app/sufferings-table.html' import sufferingsTable with context %}
+
+{% block title %}{{currentPage}}{% endblock %}
+
+{% block pageContent %}
+<div class="w-full h-full px-6 lg:px-10 pt-4">
+{{sufferingsTable()}}
+{% if myRole in ['doctor', 'administrative'] %}
+<div class="w-full flex items-center justify-center mt-4">
+  <button class="rounded-3xl bg-turqoise text-white font-bold w-64 h-12" id='new-suffering'>
+    New {{currentPage[:-1]}}
+  </button>
+</div>
+{% endif %}
+</div>
+<script>
+  let sufferingType = '{{currentPage}}'.toLowerCase().slice(0,-1)
+
+  if (sufferingType === 'clinical sign'){
+    sufferingType = 'clinicalSign'
+  }
+
+  let _headers = ["Name", "description"]
+
+  if (myRole === 'administrative' || myRole === 'doctor'){
+    _headers.push('Actions')
+  }
+
+  document.getElementById('new-suffering').addEventListener('click', () =>{
+    if (sufferingType === 'clinicalSign'){
+      sufferingType = 'clinical-sign'
+    }
+
+    window.location.href = `/app/create-${sufferingType}`
+  });
+
+  const updateSuffering = (id) => {
+    if (sufferingType === 'clinicalSign'){
+      sufferingType = 'clinical-sign'
+    }
+    window.location.href = `/app/update-${sufferingType}/${id}`
+  }
+
+  const drawTable = (_data) => {
+      let rows = Array(_data.length);
+  
+      for (let obj of _data) {
+        let cells = [
+          generateCell(`<a class="hover:text-turqoise" href="/app/${sufferingType}/${obj["id"]}">${obj["name"]}</a>`),
+          generateCell(obj["description"] || "-"),
+        ];
+
+        if (myRole === 'administrative' || myRole === 'doctor'){
+          cells.push(generateActionsCell(obj["id"], 'Suffering', false));
+        }
+  
+        rows.push(generateRow(cells, obj["id"]));
+      }
+  
+      tableContainer.innerHTML = generateTable(
+        `${sufferingType}-table`,
+        _headers,
+        rows
+      );
+    }
+
+  tableContainer.innerHTML = generateTable(
+    `${sufferingType}-table`,
+    _headers,
+    []
+  );
+
+  searchBtn.click();
+</script>
+{% endblock %}

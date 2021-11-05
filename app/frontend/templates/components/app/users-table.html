@@ -1,0 +1,203 @@
+{% macro usersTable(roles, defaultRole) %}
+<div class="pt-4 relative" id="filters">
+  <div>
+    <input type="text" id="search" placeholder="ID, Surname or Name + Surname"
+      class="w-full bg-white rounded-lg border focus:ring-2 focus:ring-turqoise border-turqoise text-base outline-none text-gray-700 py-1 px-3 leading-8 transition-colors duration-200 ease-in-out" />
+    <button id="search-btn" onclick="search()"
+      class="absolute right-0 py-2 my-1 mr-2 rounded-full px-2 hover:bg-gray-200">
+      <img src="/static/icons/search.svg" width="18" />
+    </button>
+  </div>
+  <div id="search-specialty-container" class="hidden pt-2">
+    <input type="text" id="search-specialty" placeholder="Specialty"
+      class="w-full bg-white rounded-lg border focus:ring-2 focus:ring-turqoise border-turqoise text-base outline-none text-gray-700 py-1 px-3 leading-8 transition-colors duration-200 ease-in-out" />
+    <button id="search-btn" onclick="search()"
+      class="absolute right-0 py-2 my-1 mr-2 rounded-full px-2 hover:bg-gray-200">
+      <img src="/static/icons/search.svg" width="18" />
+    </button>
+  </div>
+  <div class="border border-turqoise rounded-lg mt-2 py-2">
+    <div class="lg:-mx-0 -mx-2 w-full flex flex-row space-x-4 justify-center items-center flex-wrap gap-1">
+      {% if not roles %}
+      <div>
+        <input type="radio" value="all" name="role" checked onchange="selectRole('all')"/>
+        <label for="all">All</label>
+      </div>
+      <div>
+        <input type="radio" value="patient" name="role" onchange="selectRole('patient')"/>
+        <label for="patient">Patient</label>
+      </div>
+      <div>
+        <input type="radio" value="doctor" name="role" onchange="selectRole('doctor')"/>
+        <label for="doctor">Doctor</label>
+      </div>
+      <div>
+        <input type="radio" value="administrative" name="role" onchange="selectRole('administrative')"/>
+        <label for="administrative">Administrative</label>
+      </div>
+      {% else %}
+        {% for role in roles %}
+        <div>
+          <input type="radio" value="{{role}}" name="role" {% if defaultRole==role %} checked {% endif %} />
+          <label for="{{role}}">{{role.capitalize()}}</label>
+        </div>
+        {% endfor %}
+      {% endif %}
+    </div>
+  </div>
+</div>
+<div class="z-0 relative h-3/5 pt-2">
+  <div class="lg:overflow-x-hidden">
+    <div class="py-2" id="users-table-container"></div>
+  </div>
+  <div id="pagination-info" class="border w-full flex items-center justify-center py-1 space-x-2"></div>
+</div>
+<script>
+  let total = 0;
+  let offset = 0;
+  let limit = 3;
+  let selectedRole;
+
+  let _search = document.getElementById('search');
+  let _searchSp = document.getElementById('search-specialty');
+  let _searchSpContainer = document.getElementById('search-specialty-container');
+  let searchBtn = document.getElementById('search-btn');
+  let _roles = document.getElementsByName('role');
+
+
+  let tableContainer = document.getElementById("users-table-container");
+  let paginationContainer = document.getElementById("pagination-info");
+
+  const selectRole = (role) => {
+    if (!(['doctor', 'medicalPersonnel'].includes(role))){
+      _searchSpContainer.classList.add('hidden');
+    }else{
+      _searchSpContainer.classList.remove('hidden');
+    }
+    selectedRole = role;
+    search();
+  }
+
+  const search = async () => {
+
+    let value = _search.value;
+
+    conditions = {};
+
+    if (parseInt(value)) {
+      conditions.id = parseInt(value);
+      //search by id
+      await loadUsers(0, conditions);
+      await setPagination(
+        "user",
+        0,
+        1,
+        paginationContainer,
+        "loadUsers",
+        conditions
+      );
+    } else {
+      let role;
+
+      for (let i = 0; i < _roles.length; i++) {
+        if (_roles[i].checked) {
+          role = _roles[i].value;
+          break;
+        }
+      }
+
+      if (role && role !== "all") {
+        conditions.extraFilters = { role: role };
+      }
+
+      if (value && value.trim()) {
+        let name1;
+        let surname1;
+
+        if (value.includes(' ')) {
+          name1 = value.split(' ')[0];
+          surname1 = value.split(' ')[1];
+
+          name1 = `%${name1}%`;
+          surname1 = `%${surname1}%`;
+
+          conditions.name1 = { 'value': name1, operator: 'LIKE' };
+          conditions.surname1 = { 'value': surname1, 'operator': 'LIKE' };
+        } else {
+          surname1 = `%${value}%`;
+
+          conditions.surname1 = { 'value': surname1, 'operator': 'LIKE' };
+        }
+      }
+
+      if (_searchSp.value && !_searchSpContainer.classList.contains('hidden')){
+        conditions = {
+          ...conditions,
+          'specialty.title': {'value': `%${_searchSp.value}%`, operator: 'LIKE'},
+          'docHasSpec.idDoc': {'value': 'doctor.id', 'joins': true},
+          'docHasSpec.idSpec': {'value': 'specialty.id', 'joins': true},
+          'user.id': {'value': 'docHasSpec.idDoc', 'joins': true}
+        }
+      }
+
+      await loadUsers(0, conditions);
+      await setPagination(
+        "user",
+        0,
+        limit,
+        paginationContainer,
+        "loadUsers",
+        conditions
+      );
+    }
+  }
+
+  _search.addEventListener('keyup', (e) => {
+    if (e.keyCode === 13) {
+      searchBtn.click();
+    }
+  });
+
+  _searchSp.addEventListener('keyup', (e) => {
+    if (e.keyCode === 13) {
+      searchBtn.click();
+    }
+  });
+
+  const loadUsers = async (offset, conditions = null) => {
+    if (offset < 0 && !id) {
+      return;
+    }
+    let res;
+
+    if (conditions) {
+      res = await fetch(`/api/users/all?offset=${offset}&limit=${limit}`, {
+        body: JSON.stringify(conditions),
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        }
+      });
+    } else {
+      res = await fetch(`/api/users/all?offset=${offset}&limit=${limit}`);
+    }
+
+    let data = await res.json();
+
+    if (res.status == 200) {
+      let _data = data.result;
+
+      if (!Array.isArray(_data)) {
+        _data = Array(_data)
+      }
+
+      drawTable(_data);
+
+      return Promise.resolve("users loaded");
+    } else {
+      Promise.reject(res.data); //error object {error: "", extraMessage: ""}
+    }
+  };
+</script>
+{% endmacro %}

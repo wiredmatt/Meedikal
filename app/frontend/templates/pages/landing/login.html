@@ -1,0 +1,89 @@
+{% extends "layouts/landing-base.html" %}
+{% block title %}Login{% endblock %}
+
+{% block pageContent %}
+<div class="flex w-full font-overpass flex-col">
+  <div class="lg:pt-4 flex w-full">
+    <div class="flex flex-col w-full">
+      <div class="lg:px-8 flex flex-col pt-8 md:pt-0 px-6 lg:pl-16 lg:h-full lg:justify-around">
+        <div>
+          <p class="text-2xl font-bold">Welcome</p>
+          <p class="text-2xs">
+            Don't have an account?
+            <a href="/affiliate" class="text-turqoise font-bold pl-1">
+              Affiliate
+            </a>
+          </p>
+        </div>
+        <form class="w-full lg:w-5/6 lg:flex-wrap pt-4 md:pt-0" id="login-form">
+          <div class="lg:justify-between">
+            <div>
+              <label class="block text-gray-500 font-bold mb-1 md:mb-0 pr-4 focus:bg-transparent" for="id">
+                ID
+              </label>
+            </div>
+            <div>
+              <input class="appearance-none border border-gray-300 rounded w-full py-2 px-4 text-gray-700 leading-tight focus:outline-none focus:bg-white focus:ring-2 focus:ring-turqoise focus:border-turqoise" id="id" name="id" type="text" autofocus placeholder="X.XXX.XXX-X"/>
+            </div>
+          </div>
+          <div class="mt-4">
+            <div>
+              <label class="text-gray-500 font-bold mb-1 md:mb-0 pr-4" for="inline-password">
+                Password
+              </label>
+            </div>
+            <div>
+              <input class="appearance-none border border-gray-300 rounded w-full py-2 px-4 text-gray-700 leading-tight focus:outline-none focus:bg-white focus:ring-2 focus:ring-turqoise focus:border-turqoise" id="password" name="password" type="password" placeholder="**********"/>
+            </div>
+          </div>
+          <div id="error-box" class="hidden">
+            <p class="text-red-500 font-semibold"></p>
+          </div>
+          <div class="mt-4 text-right">
+            <a href="mailto:{{central_data['email']}}?subject=Forgot%20password&body=CI%3A%20" class="text-turqoise"> Forgot your password? </a>
+          </div>
+          <div class="mt-4">
+            <button class="focus:outline-none shadow bg-turqoise focus:shadow-outline text-white font-bold py-2 px-4 rounded w-full" type="submit">
+              Log In
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+    <div class="hidden lg:flex lg:my-auto lg:display-flex lg:mb-4">
+      <img src="{{url_for('static', filename='images/healthcare-graphic.png')}}" alt="hospital illustration" />
+    </div>
+  </div>
+</div>
+
+<script type="text/javascript">
+  localStorage.removeItem('preferredRole');
+  form = document.getElementById("login-form");
+  errorBox = document.getElementById("error-box");
+  errorText = errorBox.getElementsByTagName("p")[0];
+
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    formData = new FormData(e.currentTarget);
+
+    fetch("/api/auth/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify(Object.fromEntries(formData.entries())),
+    }).then((res) => {
+      console.log(res);
+      data = res.json().then((data) => {
+        if (res.ok) {
+          window.location.href = "/app";
+        } else {
+          errorText.textContent = data.error;
+          errorBox.classList.toggle("hidden");
+        }
+      });
+    });
+  });
+</script>
+{%endblock%}

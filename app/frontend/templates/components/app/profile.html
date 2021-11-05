@@ -1,0 +1,90 @@
+{% from "components/app/chip.html" import chip, chipAction with context %} 
+{% from "components/app/form-field.html" import formField, formFieldChips with context %} 
+{% macro profile(user, currentRole, roleActionFn='swapRole', roleActionIcon='icons/swap.svg', saveFn='updateUser') %}
+<div class="w-full lg:px-10 mt-2 mb-4">
+    <div class="bg-white rounded-xl flex flex-col w-full">
+      <div class="w-64 lg:w-96 self-center">
+        <div class="flex flex-col justify-between h-full w-full">
+          <div class="shadow-xl flex flex-col w-full py-1 space-y-1" id="roles">
+            <img src="{{url_for('static', filename= user.get('user', {}).get('photoUrl', none) or 'images/user-placeholder.png')}}" class="w-full h-full md:w-44 md:h-44 m-auto px-2 md:px-0" alt="user profile pic"/>
+            {% for r in user.get('roles', []) %} 
+              {% if readOnly %}
+                {{chip(r, "white", True, roleColors[r])}}
+                {% else %}
+                  {% if currentRole == r %}
+                    {{chip(r, "white", True, roleColors[r])}}
+                  {% else %}
+                    {{chip(r, "white", True, roleColors[r], chipAction(r, roleActionFn, roleActionIcon))}} 
+                  {% endif %}
+              {% endif %}
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+      <div class="shadow-xl p-4 space-y-2" id="user-fields">
+        {{formField("ID", user.get('user', {}).get('id', ''), True if user.get('user') is not none else False)}} 
+        {{formField("1st Name", user.get('user', {}).get('name1', '') or '', readOnly) }} 
+        {{formField("2nd Name", user.get('user', {}).get('name2', '') or '', readOnly)}}
+        {{formField("1st Surname", user.get('user', {}).get('surname1', '') or '', readOnly) }} 
+        {{formField("2nd Surname", user.get('user', {}).get('surname2', '') or '', readOnly)}} 
+        {{formField("Sex", user.get('user', {}).get('sex', '') or '', readOnly)}} 
+        {{formField("Genre", user.get('user', {}).get('genre', '') or '', readOnly)}}
+        {{formField("Birthdate", user.get('user', {}).get('birthdate', '') or '', readOnly)}}
+        {{formField("Email", user.get('user', {}).get('email', '') or '', readOnly)}} 
+        {{formField("Location", user.get('user', {}).get('location', '') or '', readOnly)}}
+        {{formField("Status", "active" if user.get('user', {}).get('active', True) else "inactive", readOnly) }}
+        
+        {% if currentRole == 'doctor' %}
+          {{formFieldChips('Specialties', user.get('specialties', []), 'title') }}  
+        {% endif %}
+
+        {{formFieldChips('Phones', user.get('phoneNumbers', []), 'phone', 'deletePhone', canAdd=not readOnly, addFn='addPhone')}}  
+      </div>
+      <div id="error-box" class="hidden">
+        <p class="text-red-500 font-semibold"></p>
+      </div>
+      {% if not readOnly %}
+      <div class="mb-4 mt-4 flex justify-between w-full space-x-10">
+        <button onclick="window.location.href=window.location.href;" class="bg-red-500 w-full font-bold text-white text-center text-sm rounded-full py-2">
+          Cancel
+        </button>
+        <button onclick="{{saveFn}}(null)" class="bg-turqoise w-full font-bold text-white text-center text-sm rounded-full py-2">
+          Save
+        </button>
+      </div>
+        {% if me['user']['id'] == user.get('user', {}).get('id', -1) %}
+          <div class="flex w-full">
+            {{formField("Password", '', readOnly)}}
+            <button class="pl-2" onclick="updatePassword()">
+              <img width="24" height="24" src="{{url_for('static', filename='icons/save.svg')}}"/>
+            </button>
+          </div>
+        {% endif %}
+      {% endif %}
+    </div>
+    {% if currentRole not in ['administrative', 'create', 'update'] and currentRole != none %}
+    <a href="/app/appointments{{ '/' + currentRole + '/' + user.get('user', {}).get('id', -1)|string if me['user']['id'] != user.get('user', {}).get('id', -1)  else ''}}">
+      <button class="mt-2 mb-1 pt-2 pb-2 bg-turqoise w-full font-bold text-white text-center text-sm rounded-full py-2">
+        View Appointments
+      </button>
+    </a>
+    {% endif %}
+</div>
+<script type="text/javascript">
+
+  let errorBox = document.getElementById("error-box");
+  let errorText = errorBox.getElementsByTagName("p")[0];
+
+  let idField = document.getElementById("ID");
+  let name1Field = document.getElementById("1st Name");
+  let name2Field = document.getElementById("2nd Name");
+  let surname1Field = document.getElementById("1st Surname");
+  let surname2Field = document.getElementById("2nd Surname");
+  let sexField = document.getElementById("Sex");
+  let genreField = document.getElementById("Genre");
+  let birthdateField = document.getElementById("Birthdate");
+  let emailField = document.getElementById("Email");
+  let locationField = document.getElementById("Location");
+  let activeField = document.getElementById("Status");
+</script>
+{% endmacro %}

@@ -1,0 +1,30 @@
+{% extends 'layouts/app-base.html' %}
+{% block title %}Branches{% endblock %}
+{% block pageContent %}
+<script>
+    const deleteBranch = async(id) => {
+        await fetch(`/api/branches`, {
+            method: 'POST',
+            headers: {
+                Accept: "application/json",
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({id: id})
+        })
+
+        document.getElementById(id).remove();
+    }
+</script>
+<div class="w-full h-full px-6 lg:px-10 pt-4">
+    <div class="{{'h-4/5' if myRole == 'administrative' else 'h-full'}} overflow-y-auto flex">
+        {% include 'components/branches.html' %}
+    </div>
+    {% if myRole == 'administrative' %}
+    <div class="w-full flex items-center justify-center mt-4 pb-4">
+        <button class="rounded-3xl bg-turqoise text-white font-bold w-64 h-12" onclick="window.location.href ='/app/create-branch'">
+            New Branch
+        </button>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

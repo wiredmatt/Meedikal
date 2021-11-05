@@ -18,22 +18,24 @@ frontend/.env.production.local
 frontend/yarn-debug.log*
 frontend/yarn-error.log*
 
-backend/venv/
+app/venv/
 __pycache__
 
-backend/config.py
+app/config.py
 
-backend/test.py
+app/test.py
 
-backend/meedikal.db
+app/meedikal.db
 
-backend/images
+app/images
+app/venv
+
 .vscode
 .env
 .flaskenv
 
 node_modules
 
-backend/static/styles/node_modules
+app/static/css/node_modules
 
 test.sql

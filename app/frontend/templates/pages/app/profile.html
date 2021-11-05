@@ -1,0 +1,143 @@
+{% from "components/app/profile.html" import profile with context %} 
+{% extends 'layouts/app-base.html' %} 
+
+{% block title %}Profile{% endblock %}
+
+{% block pageContent %}
+{{profile(me, myRole)}}
+<script type="text/javascript">
+
+  let phonesContainer = document.getElementById('container-Phones');
+
+  const updateUser = () => {
+    fetch("/api/users", {
+      method: "PUT",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        name1: name1Field.value,
+        name2: name2Field.value,
+        surname1: surname1Field.value,
+        surname2: surname2Field.value,
+        sex: sexField.value,
+        genre: genreField.value,
+        birthdate: birthdateField.value,
+        email: emailField.value,
+        location: locationField.value,
+      }),
+    }).then((res) => {
+      res.json().then((data) => {
+        if (res.status == 200){
+          //TODO: show popup / modal saying OK
+          errorBox.classList.add("hidden");
+          showOkModal();
+        }else{
+          if (data.extraMessage){
+            errorText.textContent = data.extraMessage;
+          }else{
+            errorText.textContent = data.error;
+          }
+          errorBox.classList.remove("hidden");
+        }
+      });
+    });
+  };
+
+  const deletePhone = (phone) => {
+    fetch("/api/users/phoneNumbers", {
+      method: "DELETE",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        userPhone: [
+          {
+            id: parseInt("{{id}}"),
+            phone: phone,
+          },
+        ],
+      }),
+    }).then((res) => {
+      res.json().then((data) => {
+        if (res.status == 200){
+          //TODO: show popup / modal saying OK
+          errorBox.classList.add("hidden");
+          document.getElementById(phone).remove();
+        }else{
+          errorText.textContent = data.error;
+          errorBox.classList.remove("hidden");
+        }
+      });
+    });
+  }
+
+  const addPhone = () => {
+    let phone = document.getElementById('new-Phones').value;
+
+    fetch("/api/users/phoneNumbers", {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        userPhone: [
+          {
+            id: parseInt("{{id}}"),
+            phone: phone,
+          },
+        ],
+      }),
+    }).then((res) => {
+      res.json().then((data) => {
+        if (res.status == 200){
+          //TODO: show popup / modal saying OK
+          errorBox.classList.add("hidden");
+          phonesContainer.innerHTML += generatePhoneChip(phone)
+        }else{
+          errorText.textContent = data.error;
+          errorBox.classList.remove("hidden");
+        }
+      });
+    });
+  }
+
+  const swapRole = (role) => {
+    fetch('/api/auth/currentRole', {
+      method: 'POST', 
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+      "role": role
+      })
+    }).then((res) =>{
+        localStorage.setItem('preferredRole', role);
+        window.location.reload();
+    })
+  }
+
+  const updatePassword = async() => {
+    let password = document.getElementById('Password').value;
+     
+    let res = await fetch(`/api/auth/updatePassword`, {
+      method: 'PUT', 
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+      password: password
+      })
+    });
+
+    if (res.status === 200){
+      showOkModal();
+    }
+  }
+</script>
+{% endblock %}

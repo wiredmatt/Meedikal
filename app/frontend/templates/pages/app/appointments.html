@@ -1,0 +1,375 @@
+{% extends 'layouts/app-base.html' %}
+{% block title %}Appointments{% endblock %}
+{% block pageContent %}
+<script>
+    let readOnly = '{{readOnly|safe}}';
+    let idUser = '{{idUser|safe}}';
+    let timeFilter = '{{timeFilter|safe}}';
+    let offset = 0;
+    let limit = 3;
+    let activeFilters = {};
+    let _me = idUser !== 'False' ? {user: {id: idUser}} : me;
+
+    if (idUser === 'False'){
+        if (myRole === 'administrative' || myRole == 'patient'){
+            activeFilters.typeFilter = 'all';
+        }else if (myRole === 'doctor'){
+            activeFilters.typeFilter = 'mine-doctor'
+        }else{
+            activeFilters.typeFilter = 'mine'
+        }
+    }else{
+        if (location.pathname.includes('doctor')){
+            activeFilters.typeFilter = 'mine+doctor';
+            activeFilters.id = _me.user.id
+        }else if (location.pathname.includes('patient')){
+            activeFilters.typeFilter = 'mine';
+            activeFilters.id = _me.user.id
+        }
+    }
+
+    activeFilters.timeFilter = 'selectedDay';
+    activeFilters.selectedDate = TODAY.toISOString();
+
+    let latestDateFilter = 'DAY';
+
+    const deleteAppointment = async (id) => {
+        await fetch(`/api/appointments`, {
+            method: 'DELETE',
+            headers: {
+                Accept: "application/json",
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ id: id })
+        })
+        document.getElementById(`ap-${id}`).remove();
+    }
+
+    const attendToAppointment = async (id) => {
+        await fetch(`/api/appointments/attendsTo`, {
+            method: 'POST',
+            headers: {
+                Accept: "application/json",
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ idAp: id, idPa: _me.user.id })
+        })
+        window.location.href = `/app/appointment/${id}/${_me.user.id}`;
+    }
+
+    const generateAppointmentCard = (appointment, fn, mode) => {
+        let isMyAppointment = false;
+
+        if (!appointment?.doctor?.user){
+            appointment.doctor.user = {
+                name1: 'not assigned',
+                surname1: 'yet'
+            };
+        }
+
+        if (myRole === 'patient') {
+            if (appointment.patients.length) {
+                if (appointment.patients.find(p => p.id == `${_me.user.id}`)) {
+                    isMyAppointment = true;
+                    if (_me.user.id === appointment?.doctor?.user?.id){ // happens when a patient also has the doctor role.
+                        return;
+                    }
+                }
+            }
+        } else if (myRole === 'doctor') {
+            if (appointment.doctor.user) {
+                if (appointment.doctor.user.id == `${_me.user.id}`) {
+                    isMyAppointment = true;
+                }
+            }
+        }
+
+        const pastDate = new Date(new Date(TODAY).setUTCHours(0,0,0,0)).toISOString() > appointment.appointment.date
+
+        const pastTime = new Date(new Date(Date.now()).setUTCHours(0,0,0,0)).toISOString() >= appointment.appointment.endsAt;
+
+        return `
+        <div id='ap-${appointment.appointment.id}' class="rounded-2xl border border-turqoise flex flex-col justify-center items-center space-x-1 h-full w-full">
+            <div class="flex flex-row justify-center items-center space-x-1 h-full w-full">
+              <a ${appointment?.doctor?.user?.id ? `href='/app/profile/${appointment.doctor.user.id}/doctor'` : `href='#'`} class="pt-2 flex flex-col items-center justify-center space-y-1 h-full w-1/2">
+                  <img src='${appointment?.doctor?.user?.photoUrl || "/static/images/user-placeholder.png"}' class="w-1/2 h-1/2 rounded-full border border-turqoise"/>
+                  <h3>${appointment.doctor.user.name1 + " " + appointment.doctor.user.surname1}</h3>
+              </a>
+              <div class="w-flex flex-col w-full h-full lg:pr-4 items-center justify-center">
+                  <div class="h-full grid grid-cols-2 grid-rows-4 w-full">
+                      <span class="text-turqoise font-bold w-full">Name:</span>
+                      <span class="w-full">${appointment.appointment.name}</span>
+                      <span class="text-turqoise font-bold w-full">Date:</span>
+                      <span class="w-full">${appointment.appointment.date.split('T')[0]}</span>
+                      <span class="text-turqoise font-bold w-full">Schedule:</span>
+                      <span class="w-full">${appointment.appointment.startsAt.split('T')[1].split(":", 2).join(":")} - ${appointment.appointment.endsAt.split('T')[1].split(":", 2).join(":")}</span>
+                      <span class="text-turqoise font-bold w-full">Location:</span>
+                      <div class="has-tooltip w-full h-full flex flex-row relative">
+                        <a class="hover:text-turqoise" href='/app/branches#${appointment.branch.id}'>
+                          ${appointment.branch.name}
+                        </a>
+                        <span class="tooltip rounded shadow-lg p-1 bg-gray-500 text-white font-bold top-2 mt-4">
+                          ${appointment.branch.location}
+                        </span>
+                      </div>
+                  </div>
+                  {% if myRole == 'administrative' %}
+                    <div class="flex self-end mb-2 md:mb-0 space-x-1 items-end justify-end w-full p-1">
+                        <a class="self-end hover:bg-gray-200" href="/app/update-appointment/${appointment.appointment.id}">
+                            <img src="{{url_for('static', filename='icons/edit.svg')}}" width="16" />
+                        </a>
+                        <button onclick="deleteAppointment(${appointment.appointment.id})" class="self-end hover:bg-gray-200">
+                            <img src="{{url_for('static', filename='icons/delete.svg')}}" width="16" />
+                        </button>
+                    </div>
+                  {% endif %}
+                  ${myRole === 'patient' || location.pathname.includes('patient') ?
+                isMyAppointment ? `
+                    <a href="/app/appointment/${appointment.appointment.id}/${_me.user.id}">
+                        <button class="button w-full rounded-full bg-turqoise text-white font-bold px-2 py-1">
+                            View Details
+                        </button>
+                      </a>
+                    ` :
+                    pastTime && pastDate ? '' :
+                        `<button onclick="attendToAppointment(${appointment.appointment.id})" class="w-full rounded-full bg-turqoise text-white font-bold px-2 py-1" onclick="${fn}(${appointment.appointment.id})">
+                            Attend
+                        </button>` :
+                myRole === 'doctor' || location.pathname.includes('doctor') ?
+                    isMyAppointment ?
+                        `<a href="/app/appointments/${appointment.appointment.id}">
+                            <button class="button w-full rounded-full bg-turqoise text-white font-bold px-2 py-1">
+                                ${pastDate || myRole === 'administrative' ? 'View Details' : 'Attend'}
+                            </button>
+                        </a>` : 
+                        `<a href="/app/appointments/${appointment.appointment.id}">
+                            <button class="button w-full rounded-full bg-turqoise text-white font-bold px-2 py-1">
+                                View Details
+                            </button>
+                        </a>` : ''
+            }
+              </div>
+            </div>
+        </div>
+    `;
+    }
+
+</script>
+<div class="w-full h-full px-6 lg:px-10 pt-4">
+    <div class="flex flex-col shadow-lg items-center justify-center rounded-lg">
+        <div id="month-year-selectors" class="flex space-x-8 md:space-x-16"></div>
+        <div id="calendar"
+            class="pr-2 pt-4 pb-2 md:ml-12 md:pr-0 w-full grid grid-cols-7 gap-2 grid-rows-auto justify-center"></div>
+    </div>
+    <div class="pb-2">
+        <div class="border-2 border-turqoise rounded-3xl h-full w-full mt-4">
+            <div id="ap-search-filters">
+                <div class="py-4 flex flex-col relative">
+                    <div class="px-4 {% if myRole == 'doctor' and not idUser %}hidden{% endif %}">
+                        <input type="text" id="search-doc" placeholder="Doctor's surname"
+                            class="w-full bg-white rounded-2xl border focus:ring-2 focus:ring-turqoise border-turqoise text-base outline-none text-gray-700 py-1 px-3 leading-8 transition-colors duration-200 ease-in-out" />
+                        <button id="search-doc-btn" onclick="searchDoc()"
+                            class="absolute right-0 py-2 my-1 mr-5 rounded-full px-2 hover:bg-gray-200">
+                            <img src="/static/icons/search.svg" width="18" />
+                        </button>
+                    </div>
+                    <div class="px-4 pt-2 {% if myRole == 'doctor' and not idUser %}hidden{% endif %}">
+                        <input type="text" id="search-sp" placeholder="oftalmology, cardiology..."
+                            class="w-full bg-white rounded-2xl border focus:ring-2 focus:ring-turqoise border-turqoise text-base outline-none text-gray-700 py-1 px-3 leading-8 transition-colors duration-200 ease-in-out" />
+                        <button id="search-sp-btn" onclick="searchSp()"
+                            class="absolute right-0 py-2 my-1 mr-5 rounded-full px-2 hover:bg-gray-200">
+                            <img src="/static/icons/search.svg" width="18" />
+                        </button>
+                    </div>
+                    <div class="w-full flex flex-row space-x-2 lg:space-x-4 justify-center items-center flex-wrap gap-1 py-2">
+                        <div>
+                            <input type="radio" value="all" name="time-filter" />
+                            <label for="all">All</label>
+                        </div>
+                        <div>
+                            <input type="radio" value="selectedDay" name="time-filter" checked />
+                            <label for="day">Selected Day</label>
+                        </div>
+                        <div>
+                            <input type="radio" value="selectedMonth" name="time-filter" />
+                            <label for="selectedMonth">Selected Month</label>
+                        </div>
+                        <div>
+                            <input type="radio" value="future" name="time-filter" />
+                            <label for="future">Future ones</label>
+                        </div>
+                        <div>
+                            <input type="radio" value="past" name="time-filter" />
+                            <label for="past">Past ones</label>
+                        </div>
+                    </div>
+                    <div class="{% if myRole == 'administrative' or myRole == 'doctor' %} hidden {% endif %} lg:-mx-0 -mx-2 w-full flex flex-row space-x-4 justify-center items-center flex-wrap gap-1 py-2">
+                        {% if not idUser%}
+                        <div>
+                            <input type="radio" value="all" name="type-filter" checked />
+                            <label for="all">All</label>
+                        </div>
+                        <div>
+                            <input type="radio" value="mine" name="type-filter" />
+                            <label for="mine">Mine</label>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="h-4/5 flex flex-col pt-2 pb-2">
+        <div class="px-2 flex flex-col h-full w-full relative border-2 border-turqoise rounded-3xl pt-2 pb-2 mb-4">
+            <div class="lg:overflow-x-hidden overflow-y-auto py-2 pb-2 h-full">
+                <div id="aps-container" class="px-2 space-y-2 pb-2"></div>
+            </div>
+            <div id="pagination-info" class="rounded-3xl border w-full flex items-center justify-center py-2 px-2 space-x-2"></div>
+        </div>
+        {% if myRole == 'administrative' %}
+        <div class="w-full flex items-center justify-center mt-4 pb-4">
+            <button class="rounded-3xl bg-turqoise text-white font-bold w-64 h-12"
+                onclick="window.location.href ='/app/create-appointment'">
+                New Appointment
+            </button>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script src="{{url_for('static', filename='js/calendar.js')}}" async id="calendar-script"></script>
+<script>
+    let apsContainer = document.getElementById('aps-container');
+    let paginationContainer = document.getElementById('pagination-info');
+    let timeFilters = document.getElementsByName('time-filter');
+    let typeFilters = document.getElementsByName('type-filter');
+    let _searchDoc = document.getElementById('search-doc');
+    let _searchSp = document.getElementById('search-sp');
+    let searchBtn = document.getElementsByName('search-btn');
+
+    const loadAppointments = async (_offset = offset) => {
+        activeFilters.doctorSurname1 = `%${_searchDoc.value}%`;
+        activeFilters.appointmentName = `%${_searchSp.value}%`;
+
+        if (activeFilters.doctorSurname1.replaceAll(/\s/g,'') === '%%'){
+            delete activeFilters.doctorSurname1
+        }
+        if (activeFilters.appointmentName.replaceAll(/\s/g,'') === '%%'){
+            delete activeFilters.appointmentName
+        }
+        
+        console.log('filtering by: ', activeFilters);
+
+        let res = await fetch(`/api/appointments/filter?offset=${_offset}&limit=${limit}`, {
+            method: 'POST',
+            headers: {
+                Accept: "application/json",
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(activeFilters)
+        });
+
+        let data = await res.json();
+
+        let apsCards = data.result.map((ap) => generateAppointmentCard(ap, "", activeFilters.typeFilter))
+
+        setPaginationFromTotal(_offset, limit, data.paginationData.total, paginationContainer, "loadAppointments");
+
+        apsContainer.innerHTML = apsCards.join('\n');
+    };
+
+    const select = (_filter, value = new Date(activeFilters.selectedDate)) => {
+        const filterByMonth = () => {
+            let from = new Date(+value);
+            from.setUTCDate(1);
+            from.setUTCHours(0, 0, 0, 0);
+
+            let to = new Date(+value);
+            to.setUTCDate(Date.prototype.getMonthDays(to.getMonth()));
+            to.setUTCHours(23, 59, 0, 0);
+            
+            activeFilters.timeInterval = {
+                'from': from.toISOString(),
+                'to': to.toISOString()
+            }
+
+            latestDateFilter = _filter;
+            activeFilters.selectedDate = from.toISOString();
+
+            loadAppointments();
+        }
+
+        const filterByDate = () => {
+            let from = new Date(value.setUTCHours(0, 0, 0, 0));
+            let to = new Date(value.setUTCHours(23, 59, 0, 0));
+
+            activeFilters.timeInterval = {
+                'from': from.toISOString(),
+                'to': to.toISOString()
+            }
+
+            latestDateFilter = _filter;
+            activeFilters.selectedDate = from.toISOString();
+
+            loadAppointments();
+        }
+
+        if (_filter === 'YEAR') {
+            if (latestDateFilter === 'MONTH') {
+                filterByMonth();
+            } else {
+                filterByDate();
+            }
+        } else if (_filter === 'MONTH' || _filter === 'selectedMonth') {
+            filterByMonth();
+        } else {
+            filterByDate();
+        }
+    }
+
+    for (radio in timeFilters) {
+        timeFilters[radio].onclick = (ev) => {
+            activeFilters.timeFilter = ev.currentTarget.value;
+            activeFilters.selectedDate = new Date(selectedYear, selectedMonth, selectedDay);
+            select(activeFilters.timeFilter);
+        };
+    }
+
+    if (myRole !== 'administrative') {
+        for (radio in typeFilters) {
+            typeFilters[radio].onclick = (ev) => {
+                activeFilters.typeFilter = ev.currentTarget.value;
+                loadAppointments();
+            }
+        }
+    }
+
+    const searchDoc = () => {
+        loadAppointments();
+    }
+
+    const searchSp = () => {
+        loadAppointments();
+    }
+
+    _searchDoc.addEventListener('keyup', (e) => {
+        if (e.keyCode === 13) {
+            searchDoc();
+        }
+    });
+
+    _searchSp.addEventListener('keyup', (e) => {
+        if (e.keyCode === 13) {
+            searchSp();
+        }
+    });
+
+</script>
+<script>
+    let script = document.getElementById("calendar-script");
+
+    script.addEventListener('load', () => {
+        initCalendar("month-year-selectors", "month-select", "year-select", "calendar", select)
+    });
+</script>
+{% endblock %}

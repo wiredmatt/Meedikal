@@ -1,0 +1,44 @@
+{% macro errorBox() %}
+<div id="error-box" class="hidden">
+    <p class="text-red-500 font-semibold"></p>
+</div>
+<script>
+    let errorBox = document.getElementById('error-box');
+    let errorText = errorBox.getElementsByTagName('p')[0];
+
+    const showError = (msg) => {
+        errorText.textContent = msg;
+        errorBox.classList.remove("hidden")
+        toggleLoadingModal(true)
+    }
+
+    const hideError = () => {
+        errorText.textContent = '';
+        errorBox.classList.add("hidden")
+    }
+
+    const markFieldError = (field) => {
+        field.classList.add('border-2') 
+        field.classList.add('border-red-200') 
+        field.focus();
+    }
+
+    const unmarkFieldError = (field) => {
+        field.classList.remove('border-2') 
+        field.classList.remove('border-red-200') 
+    }
+
+    const validateLength = (field, length=1, msg='Invalid input') =>{
+        console.log(field.value.trim().length)
+        if(field.value.trim().length < length){
+            markFieldError(field);
+            showError(msg + ` Must be more than ${length-1} characters long.`)
+            return false;
+        }else{
+            unmarkFieldError(field);
+            hideError();
+            return true;
+        }
+    }
+</script>
+{% endmacro %}

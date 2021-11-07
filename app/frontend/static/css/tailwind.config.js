@@ -3,10 +3,10 @@ module.exports = {
     mode: 'all',
     content: [
     "../js/*.js",
-    "../../templates/**/*.html",
-    "../../templates/components/**/*.html",
-    "../../templates/layouts/*.html",
-    "../../templates/pages/**/*.html"],
+    "../../templates/**/*.jinja2",
+    "../../templates/components/**/*.jinja2",
+    "../../templates/layouts/*.jinja2",
+    "../../templates/pages/**/*.jinja2"],
     safelist: [
       'bg-gray-300',
       'bg-gray-50',

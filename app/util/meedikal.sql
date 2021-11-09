@@ -13,7 +13,7 @@ CREATE TABLE user (
     genre VARCHAR(32),
     active BOOLEAN NOT NULL DEFAULT 1,
     photoUrl TEXT
-);
+) WITHOUT ROWID;
 
 CREATE TABLE doctor (
     id INTEGER PRIMARY KEY NOT NULL,

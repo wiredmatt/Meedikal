@@ -1,5 +1,5 @@
-{% extends 'layouts/app-base.html' %} 
-{% from "components/app/profile.html" import profile with context %} 
+{% extends 'layouts/app-base.jinja2' %} 
+{% from "components/app/profile.jinja2" import profile with context %} 
 
 {% block title %}Create User{% endblock %} 
 
@@ -65,14 +65,15 @@
             document.getElementById('Specialties').classList.add('hidden');
         }
 
-        if (selectedUserRoles.length < 1){
-            toggleRole('patient');
-        }
-
     }
 
     const saveUser = async() => {
         toggleLoadingModal();
+        
+        if (selectedUserRoles.length < 1){
+            toggleRole('patient');
+        }
+
         errorBox.classList.add("hidden");
 
         const saveUserBody = {
@@ -108,49 +109,42 @@
             return;
         }
 
-        if (selectedUserRoles.includes('doctor')){  
-            if (!selectedUserRoles.includes('medicalPersonnel')){
-                selectedUserRoles.unshift('medicalPersonnel') // push medicalPersonnel to be the first item of the list.
-            }
-        }
-
         for (let role of selectedUserRoles){
-            await fetch(`/api/users/${role}`, {
+            await fetch(`/api/users/${role}s/${createdUser.result.user.id}`, {
                 method: 'POST',
                 headers: {
-                    Accept: "application/json",
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    id: createdUser.result.user.id
-                })
+                    Accept: "application/json"
+                }
             });
         }
 
-        if (phones.length > 0){
+        for (let phone of phones){
             await fetch(`/api/users/phoneNumbers/${createdUser.result.user.id}`, {
                 method: 'POST',
                 headers: {
                     Accept: "application/json",
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify({userPhone: phones.map(p => ({id: createdUser.result.user.id, phone: p}))})
+                body: JSON.stringify({
+                    id: createdUser.result.user.id,
+                    phone: phone
+                })
             });
         }
 
-        if (specialties.length > 0){
-            await fetch('/api/users/doctors/docHasSpec', {
-                method: 'POST',
-                headers: {
-                    Accept: "application/json",
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({docHasSpec: specialties.map(sp => ({idDoc: createdUser.result.user.id, title: sp}))})
-            });
+        if (selectedUserRoles.includes(doctor)){
+            for (let sp of specialties){
+                await fetch(`/api/users/doctors/specialties/${createdUser.result.user.id}/${specialty}`, {
+                    method: 'POST',
+                    headers: {
+                        Accept: "application/json",
+                        "Content-Type": "application/json",
+                    }
+                });
+            }
         }
 
         showOkModal();
-
     }
 
 </script>

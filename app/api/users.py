@@ -11,9 +11,9 @@ from models.User import *
 
 router = Blueprint('users', __name__, url_prefix='/users')
 
-def userExists(idFields=['id'], idArgs=['idUser'], abort=True):
+def userExists(Model:BaseModel=User, idFields=['id'], idArgs=['idUser'], abort=True):
     def decorator(f):
-        @resourceExists(User, idFields, idArgs, abort)
+        @resourceExists(Model, idFields, idArgs, abort)
         @wraps(f)
         def wrapper(obj, *args,**kwargs):
             return f(*args, **kwargs, user=obj)
@@ -22,9 +22,9 @@ def userExists(idFields=['id'], idArgs=['idUser'], abort=True):
     return decorator
 
 def userToReturn(user: User, id:int=0, currentRole:str='', role=None, **kwargs):
-    if user is None:
+    if not User:
         return None
-    if role is None:
+    if not role:
         role = parseRole(request)
 
     _user = asdict(user)
@@ -55,12 +55,12 @@ def userToReturn(user: User, id:int=0, currentRole:str='', role=None, **kwargs):
 @router.route('/all', methods=['GET', 'POST'])
 @getCurrentRole
 @paginated()
-def allUsers(offset:int, limit: int, data:dict=None, **kwargs):
+def allUsers(offset:int, limit: int, data:dict={}, **kwargs):
     return crudReturn([userToReturn(u, **kwargs) for u in User.selectMany(dict(data or {}).copy(), offset=offset, limit=limit)])
 
 @router.get('/<int:idUser>')
 @getCurrentRole
-def getUserByCi(idUser:int=None, **kwargs):
+def getUserById(idUser:int=None, **kwargs):
     return crudReturn(userToReturn(User.selectOne({'id': idUser}), **kwargs))
 
 @router.post('')
@@ -149,7 +149,7 @@ def phoneNumbers(user:User, data:dict=None, **kw):
     elif request.method == 'POST':
         result = UserPhone(**data).insert()
     else:
-        result = UserPhone.selectOne({'id': user.id}).delete()
+        result = UserPhone.selectOne(data).delete()
 
     return crudReturn(result)
 
@@ -164,29 +164,20 @@ def getSpOfDoc(idDoc:int, **kwargs):
             sp['title'] = Specialty.selectOne({'id': sp['idSpec']}).title
     return crudReturn(result)
 
-@router.route('/doctors/specialties/<int:idDoc>/<int:idSpec>', methods=['POST', 'DELETE'])
 @router.route('/doctors/specialties/<int:idDoc>/<string:title>', methods=['POST', 'DELETE'])
 @requiresRole(['administrative'])
-@passJsonData
-def addOrDeleteDocsSpec(idDoc:int, idSpec:int=None, title:str=None):
-    _id, _idField = (idSpec, 'idSpec') if idSpec is not None else (title, 'title')
-    
+def addOrDeleteDocsSpec(idDoc:int, title:str=None):
     if request.method == 'POST':
-        if _idField == 'title':
-            _sp: Specialty = Specialty(title=_id).insertOrSelect()
-            result = asdict(DocHasSpec(_sp.id, idDoc).insert())
-            result['title'] = _id
-        else:
-            _sp = Specialty.selectOne({'id': idSpec})
-            result = asdict(DocHasSpec(_sp.id, idDoc).insert())
-            result['title'] = _sp.title
+        _sp: Specialty = Specialty(title=title).insertOrSelect()
+        result = asdict(DocHasSpec(_sp.id, idDoc).insert())
+        result['title'] = title
     else:
-        _sp = Specialty.selectOne({_idField: _id})
-        result = DocHasSpec.selectOne({idSpec : _sp.id, 'idDoc': idDoc}).delete()
+        _sp = Specialty.selectOne({title: title})
+        result = DocHasSpec.selectOne({'idSpec' : _sp.id, 'idDoc': idDoc}).delete()
 
     return crudReturn(result)
  
-@router.route('/doctors/<specialty>', methods=['GET', 'POST'])
+@router.route('/doctors/<string:specialty>', methods=['GET', 'POST'])
 @requiresAuth
 @paginated()
 def filterDocsBySpecialty(offset:int, limit: int, specialty:str, **kwargs):

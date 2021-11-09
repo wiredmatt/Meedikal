@@ -1,4 +1,4 @@
-{% extends 'layouts/app-base.html' %} {% from "components/app/profile.html" import profile with context %}
+{% extends 'layouts/app-base.jinja2' %} {% from "components/app/profile.jinja2" import profile with context %}
 
 {% block title %}Update User{% endblock %}
 {%block pageContent %}
@@ -8,16 +8,12 @@
     let user = JSON.parse('{{user|tojson}}');
     let roleColors = JSON.parse('{{roleColors|tojson}}');
 
-    let availableRoles = [
-        "patient",
-        "administrative",
-        "doctor",
-    ];
+    let availableRoles = ["patient", "administrative", "doctor"];
 
     let rolesContainer = document.getElementById("roles");
 
     availableRoles.forEach((r) => {
-        if (!user['roles'].includes(r) && r !== "medicalPersonnel") {
+        if (!user['roles'].includes(r)) {
             rolesContainer.innerHTML += generateRoleChip(r, roleColors[r]);
         }
     });
@@ -33,7 +29,7 @@
             let chips = "";
 
             if (!user.specialties) {
-                let res = await fetch(`/api/users/doctor/docHasSpec/${user.user.id}`, {
+                let res = await fetch(`/api/users/doctors/specialties/${user.user.id}`, {
                     headers: {
                         Accept: "application/json",
                     },
@@ -56,42 +52,27 @@
     formFields.appendChild(specialtiesContainer);
 
     const toggleRole = async (role) => {
+        toggleLoadingModal();
         img = document.getElementById(`icon-${role}`);
 
         if (!user['roles'].includes(role)) { //add
-            toggleLoadingModal();
-
-            await fetch(`/api/users/${role}`, {
+            await fetch(`/api/users/${role}/${user.user.id}`, {
                 method: 'POST',
                 headers: {
                     Accept: "application/json",
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    id: user['user'].id
-                })
+                }
             });
-
             user['roles'].push(role);
             img.src = '/static/icons/remove.svg';
-
-            toggleLoadingModal();
         } else { //remove
-            toggleLoadingModal();
-
-            await fetch(`/api/users/${role}`, {
+            await fetch(`/api/users/${role}/${user.user.id}`, {
                 method: 'DELETE',
                 headers: {
                     Accept: "application/json",
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    id: user['user']['id']
-                })
+                }
             });
             user['roles'] = user['roles'].filter(r => r !== role);
             img.src = '/static/icons/add.svg';
-            toggleLoadingModal();
         }
 
         if (user['roles'].includes('doctor')) {
@@ -100,15 +81,15 @@
             document.getElementById('Specialties').classList.add('hidden');
         }
 
-        if (selectedUserRoles.length < 1){
-            toggleRole('patient');
-        }
-
+        toggleLoadingModal();
     }
 
     const updateUser = () => {
         toggleLoadingModal();
-        fetch(`/api/users/${parseInt(user.user.id)}`, {
+        if (selectedUserRoles.length < 1){
+            toggleRole('patient');
+        }
+        fetch(`/api/users/${user.user.id}`, {
             method: "PUT",
             headers: {
                 Accept: "application/json",
@@ -127,87 +108,56 @@
             }),
         }).then((res) => {
             res.json().then((data) => {
-                if (res.status == 200) {
-                    //TODO: show popup / modal saying OK
+                if (res.status === 200) {
                     errorBox.classList.add("hidden");
                     showOkModal();
                 } else {
-                    if (data.extraMessage) {
-                        errorText.textContent = data.extraMessage;
-                    } else {
-                        errorText.textContent = data.error;
-                    }
+                    errorText.textContent = data.extraMessage || data.error;
                     errorBox.classList.remove("hidden");
+                    toggleLoadingModal();
                 }
             });
         });
     };
 
-    const deletePhone = (phone) => {
+    const deletePhone = async(phone) => {
         toggleLoadingModal();
-        fetch("/api/users/phoneNumbers", {
+        await fetch(`/api/users/phoneNumbers/${user.user.id}`, {
             method: "DELETE",
             headers: {
                 Accept: "application/json",
                 "Content-Type": "application/json",
             },
             body: JSON.stringify({
-                userPhone: [
-                    {
-                        id: user.user.id,
-                        phone: phone,
-                    },
-                ],
-            }),
-        }).then((res) => {
-            res.json().then((data) => {
-                if (res.status == 200) {
-                    //TODO: show popup / modal saying OK
-                    errorBox.classList.add("hidden");
-                    document.getElementById(phone).remove();
-                } else {
-                    errorText.textContent = data.error;
-                    errorBox.classList.remove("hidden");
-                }
-            });
-            toggleLoadingModal();
-        });
+                id: user.user.id,
+                phone: phone,
+            })
+        })
+        document.getElementById(phone).remove();
+        toggleLoadingModal();
     }
 
-    const addPhone = () => {
+    const addPhone = async() => {
         toggleLoadingModal();
         let phone = document.getElementById('new-Phones').value;
 
-        fetch("/api/users/phoneNumbers", {
+        await fetch(`/api/users/phoneNumbers/${user.user.id}`, {
             method: "POST",
             headers: {
                 Accept: "application/json",
                 "Content-Type": "application/json",
             },
             body: JSON.stringify({
-                userPhone: [
-                    {
-                        id: parseInt(user.user.id),
-                        phone: phone,
-                    },
-                ],
+                id: user.user.id,
+                phone: phone,
             }),
-        }).then((res) => {
-            res.json().then((data) => {
-                if (res.status == 200) {
-                    //TODO: show popup / modal saying OK
-                    errorBox.classList.add("hidden");
-                    phonesContainer.innerHTML += generatePhoneChip(phone)
-                } else {
-                    errorText.textContent = data.error;
-                    errorBox.classList.remove("hidden");
-                }
-            });
-            toggleLoadingModal();
-        });
+        })
+        phonesContainer.innerHTML += generatePhoneChip(phone);
+        toggleLoadingModal();
     }
 
     const addSpecialty = async () => {
+        toggleLoadingModal();
         let specialty = document.getElementById('new-Specialties').value;
         if (!user.specialties) {
             user.specialties = [];
@@ -218,31 +168,28 @@
             document.getElementById('container-Specialties').innerHTML += generateSpecialtyChip(specialty);
         }
 
-        await fetch('/api/users/doctors/docHasSpec', {
+        await fetch(`/api/users/doctors/specialties/${user.user.id}/${specialty}`, {
             method: 'POST',
             headers: {
-                Accept: "application/json",
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ docHasSpec: [{ idDoc: user.user.id, title: specialty }] })
+                Accept: "application/json"
+            }
         });
-
+        toggleLoadingModal();
     }
 
     const deleteSpecialty = async (sp) => {
+        toggleLoadingModal();
         user['specialties'] = user['specialties'].filter(s => s !== sp);
 
-        await fetch('/api/users/doctors/docHasSpec', {
+        await fetch(`/api/users/doctors/specialties/${user.user.id}/${sp}`, {
             method: 'DELETE',
             headers: {
-                Accept: "application/json",
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ docHasSpec: [{ idDoc: user.id, title: sp }] })
+                Accept: "application/json"
+            }
         });
 
         document.getElementById(sp).remove();
-
+        toggleLoadingModal();
     }
 
 </script>

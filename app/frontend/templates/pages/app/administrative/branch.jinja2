@@ -1,6 +1,6 @@
-{% from "components/app/form-field.html" import formField with context %}
+{% from "components/app/form-field.jinja2" import formField with context %}
 
-{% extends 'layouts/app-base.html' %}
+{% extends 'layouts/app-base.jinja2' %}
 {% block title %}{{'Create' if 'create' in request.endpoint else 'Update'}} Branch{% endblock %}
 
 {% block pageContent %}

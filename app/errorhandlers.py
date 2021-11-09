@@ -1,7 +1,9 @@
 from flask import redirect
+from flask.templating import render_template
 from routers import apiRouter, frontendRouter
 from util.returnMessages import *
 from util.errors import *
+from werkzeug.exceptions import NotFound # TODO for frontend!
 from sqlite3.dbapi2 import IntegrityError
 from util.db import getDb
 import jwt
@@ -88,7 +90,7 @@ def notFound(e):
     return genericErrorReturn('Invalid type of suffering', code=404)
 
 @apiRouter.errorhandler(ResourceNotFound)
-def notFound(e):
+def resourceDoesntExist(e):
     return genericErrorReturn('Resource does not exist', code=404)
 
 @apiRouter.errorhandler(Exception) # any other exception
@@ -107,3 +109,8 @@ def missingCookieError(e):
 @frontendRouter.errorhandler(MissingRoleError)
 def missingRoleErrorF(e: MissingRoleError):
     return redirect('/app')
+
+@frontendRouter.errorhandler(NotFound)
+@frontendRouter.errorhandler(ResourceNotFound)
+def notFound(e):
+    return render_template('404.html')

@@ -29,11 +29,11 @@ def requiresRole(roles:list[str]): # the required roles to execute the action
 
             if 'idUser' in [k for k in kwargs.keys()]:
                 if kwargs['idUser'] == id:
-                    return f(*args, **kwargs, id=id)
+                    return f(*args, **kwargs)
 
             for r in roles:
                 if r in userRoles:
-                    return f(*args, **kwargs, id=id)
+                    return f(*args, **kwargs)
 
             raise MissingRoleError(roles)
 

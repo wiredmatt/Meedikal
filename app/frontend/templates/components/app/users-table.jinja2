@@ -69,7 +69,7 @@
   let paginationContainer = document.getElementById("pagination-info");
 
   const selectRole = (role) => {
-    if (!(['doctor', 'medicalPersonnel'].includes(role))){
+    if (role !== 'doctor'){
       _searchSpContainer.classList.add('hidden');
     }else{
       _searchSpContainer.classList.remove('hidden');

@@ -1,6 +1,6 @@
-{% from "components/app/appointment-card.html" import appointmentDetails with context %}
-{% from "components/app/patient-card.html" import patientCard with context %}
-{% extends 'layouts/app-base.html' %}
+{% from "components/app/appointment-card.jinja2" import appointmentDetails with context %}
+{% from "components/app/patient-card.jinja2" import patientCard with context %}
+{% extends 'layouts/app-base.jinja2' %}
 
 {% block title %}Appointments{% endblock %}
 {% block pageContent %}

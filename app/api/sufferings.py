@@ -1,15 +1,15 @@
 from dataclasses import asdict
 from functools import wraps
-from flask import Blueprint, request
-from flask.json import jsonify
+from flask import Blueprint
 from util.errors import InvalidSufferingType
 from util.crud import crudReturn
 from models._base import BaseModel
-from models.ClinicalSign import ClinicalSign
-from models.Disease import Disease
-from models.Symptom import Symptom
+from models.ClinicalSign import *
+from models.Disease import *
+from models.Symptom import *
+from models.Appointment import AttendsTo
 from middleware.authGuard import requiresRole, requiresAuth
-from middleware.data import paginated, passJsonData, resourceExists
+from middleware.data import paginated, passJsonData, resourceExists, validDataValues
 
 router = Blueprint('sufferings', __name__, url_prefix='/sufferings')
 
@@ -21,15 +21,15 @@ def validSufferingType(s:str) -> BaseModel:
     else:
         raise InvalidSufferingType
 
-def sufferingExists(idFields=['id'], idArgs=['idS'], abort=True):
+def sufferingExists(idFields=['id'], idArgs=['idS'], abort=True, Model:BaseModel=None):
     def decorator(f):
         @wraps(f)
         def wrapper(sufferingType:str=None, *args, **kwargs): # request.view_args['sufferingType']            
-            @resourceExists(Model=validSufferingType(sufferingType), idFields=idFields, idArgs=idArgs, abort=abort)
-            def x(obj=None):
+            @resourceExists(Model=Model if Model is not None else validSufferingType(sufferingType), idFields=idFields, idArgs=idArgs, abort=abort)
+            def passSf(obj=None):
                 return f(suffering=obj, *args, **kwargs)
             
-            return x()
+            return passSf()
         return wrapper
     return decorator
 
@@ -69,3 +69,83 @@ def updateSuffering(suffering:BaseModel=None, data:dict={}, *args, **kwargs):
 @sufferingExists()
 def deleteSuffering(suffering:BaseModel, **kwargs):
     return crudReturn(suffering.delete())
+
+def passSuffering(Model:BaseModel, idField:str, nameField:str='name'):
+    def decorator(f):
+        @wraps(f)
+        @passJsonData
+        def wrapper(data:dict, *args,**kwargs):
+            if data.get(idField, None) is None:
+                _entity = Model.insertOrSelect({nameField: data[nameField]})
+                data[idField] = _entity.id
+                data.pop(nameField)
+            return f(*args, **kwargs, data=data)
+        
+        return wrapper
+    return decorator
+
+@router.post('/registersSy')
+@requiresRole(['doctor', 'administrative'])
+@passSuffering(Symptom, 'idSy')
+@validDataValues(AttendsTo, ['idAp', 'idPa'], ['idAp', 'idPa'])
+@passJsonData
+def createRegistersSy(data:dict, **kwargs):
+    return crudReturn(RegistersSy(**data).insert())
+
+@router.delete('/registersSy')
+@requiresRole(['doctor', 'administrative'])
+@passSuffering(RegistersSy, 'idSy')
+@validDataValues(RegistersSy, ['idAp', 'idPa', 'idSy'], ['idAp', 'idPa', 'idSy'])
+@passJsonData
+def deleteRegistersSy(data:dict, **kwargs):
+    return crudReturn(RegistersSy.selectOne(data).delete())
+
+@router.get('/registersSy/<int:idAp>/<int:idPa>')
+@requiresRole(['self', 'doctor', 'administrative'])
+@passJsonData
+def getRegistersSy(idAp:int, idPa:int, **kwargs):
+    return crudReturn(RegistersSy.selectMany({'idAp': idAp, 'idPa': idPa}))
+
+@router.post('/registersCs')
+@requiresRole(['doctor', 'administrative'])
+@passSuffering(ClinicalSign, 'idCs')
+@validDataValues(AttendsTo, ['idAp', 'idPa'], ['idAp', 'idPa'])
+@passJsonData
+def createRegistersCs(data:dict, **kwargs):
+    return crudReturn(RegistersCs(**data).insert())
+
+@router.delete('/registersCs')
+@requiresRole(['doctor', 'administrative'])
+@passSuffering(RegistersCs, 'idCs')
+@validDataValues(RegistersCs, ['idAp', 'idPa', 'idCs'], ['idAp', 'idPa', 'idCs'])
+@passJsonData
+def deleteRegistersCs(data:dict, **kwargs):
+    return crudReturn(RegistersCs.selectOne(data).delete())
+
+@router.get('/registersCs/<int:idAp>/<int:idPa>')
+@requiresRole(['self', 'doctor', 'administrative'])
+@passJsonData
+def getRegistersCs(idAp:int, idPa:int, **kwargs):
+    return crudReturn(RegistersCs.selectMany({'idAp': idAp, 'idPa': idPa}))
+
+@router.post('/diagnoses')
+@requiresRole(['doctor', 'administrative'])
+@passSuffering(Disease, 'idDis')
+@validDataValues(AttendsTo, ['idAp', 'idPa'], ['idAp', 'idPa'])
+@passJsonData
+def createDiagnoses(data:dict, **kwargs):
+    return crudReturn(Diagnoses(**data).insert())
+
+@router.delete('/diagnoses')
+@requiresRole(['doctor', 'administrative'])
+@passSuffering(Diagnoses, 'idDis')
+@validDataValues(Diagnoses, ['idAp', 'idPa', 'idDis'], ['idAp', 'idPa', 'idDis'])
+@passJsonData
+def deleteDiagnoses(data:dict, **kwargs):
+    return crudReturn(Diagnoses.selectOne(data).delete())
+
+@router.get('/diagnoses/<int:idAp>/<int:idPa>')
+@requiresRole(['self', 'doctor', 'administrative'])
+@passJsonData
+def getDiagnoses(idAp:int, idPa:int, **kwargs):
+    return crudReturn(Diagnoses.selectMany({'idAp': idAp, 'idPa': idPa}))

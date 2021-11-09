@@ -1,4 +1,4 @@
-{% extends 'layouts/app-base.html' %}
+{% extends 'layouts/app-base.jinja2' %}
 {% block title %}Branches{% endblock %}
 {% block pageContent %}
 <script>
@@ -17,7 +17,7 @@
 </script>
 <div class="w-full h-full px-6 lg:px-10 pt-4">
     <div class="{{'h-4/5' if myRole == 'administrative' else 'h-full'}} overflow-y-auto flex">
-        {% include 'components/branches.html' %}
+        {% include 'components/branches.jinja2' %}
     </div>
     {% if myRole == 'administrative' %}
     <div class="w-full flex items-center justify-center mt-4 pb-4">

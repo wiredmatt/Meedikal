@@ -6,11 +6,11 @@ from util.db import getDb
 db = getDb()
 cursor = db.cursor()
 
-def getTotal(tablename:str, operator:str='AND', data:dict=None) -> int:
+def getTotal(tablename:str, operator:str='AND', data:dict={}) -> int:
     _module = __import__('models')
     _class:'BaseModel' = getattr(_module, tablename[:1].upper() + tablename[1:])
-    
-    return _class.count(data, operator)
+    print(tablename, data, _class)
+    return _class.count(data or {}, operator)
 
 @dataclass
 class BaseModel:
@@ -99,11 +99,11 @@ class BaseModel:
 
     @classmethod
     def selectOne(cls, items:dict, operator='AND') -> 'BaseModel':
-        return cls.select(items, operator, shape='one')
+        return cls.select(items=items, operator=operator, shape='one')
 
     @classmethod
-    def selectMany(cls, items:dict, operator='AND', limit:int=None, offset:int=None) -> list['BaseModel']:
-        return cls.select(items, operator, offset, limit, 'list')
+    def selectMany(cls, items:dict, operator='AND', offset:int=None, limit:int=None) -> list['BaseModel']:
+        return cls.select(items=items, operator=operator, offset=offset, limit=limit, shape='list')
 
     @classmethod
     def count(cls, items:dict, operator='AND') -> int:
@@ -132,9 +132,9 @@ class BaseModel:
         if commit:
             db.commit()
 
-            lastrowid = cursor.lastrowid
-                    
-            if self.__idField__ is not None:
+            lastrowid = cursor.lastrowid # tables that automatically generate id
+            
+            if getattr(self, self.__idField__, None) is None:
                 if ',' not in self.__idField__:
                     setattr(self, self.__idField__, lastrowid)
         
@@ -155,7 +155,7 @@ class BaseModel:
                     """
 
         values = newValues + oldValues
-        print(statement,values)
+        # print(statement,values)
         cursor.execute(statement, values) # updates the row in the db
         
         for k, v in items.items():

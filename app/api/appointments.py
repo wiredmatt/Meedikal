@@ -1,38 +1,24 @@
 from flask import Blueprint
 from dataclasses import asdict
 from functools import wraps
+from models import db
 from models.User import Doctor, User
 from models.Appointment import *
 from models.Branch import Branch
-from models.ClinicalSign import ClinicalSign, RegistersCs
-from models.Disease import Disease, Diagnoses
-from models.Symptom import Symptom, RegistersSy
-from models.Branch import *
 from util.crud import *
 from util.returnMessages import *
 from middleware.authGuard import requiresRole, requiresAuth, getCurrentRole
-from middleware.data import passJsonData, paginated, resourceExists
-from models import db
+from middleware.data import passJsonData, paginated, resourceExists, validDataValues
 from .users import userToReturn
 
 router = Blueprint('appointments', __name__, url_prefix='/appointments')
 
-def appointmentExists(idFields=['id'], idArgs=['idAp'], abort=True):
-    def decorator(f):
-        @resourceExists(Appointment, idFields, idArgs, abort)
-        @wraps(f)
-        def wrapper(obj, *args,**kwargs):
-            return f(*args, **kwargs, appointment=obj)
-        
-        return wrapper
-    return decorator
-
-def apRelationExists(Model=BaseModel,idFields=['idAp'], idArgs=['idAp'], abort=True):
+def appointmentExists(Model=Appointment, idFields=['id'], idArgs=['idAp'], abort=True):
     def decorator(f):
         @resourceExists(Model, idFields, idArgs, abort)
         @wraps(f)
         def wrapper(obj, *args,**kwargs):
-            return f(*args, **kwargs, obj=obj)
+            return f(*args, **kwargs, appointment=obj)
         
         return wrapper
     return decorator
@@ -73,38 +59,21 @@ def updateAppointmentById(appointment:Appointment, data:dict, **kw):
 def deleteAppointment(appointment:Appointment, **kwargs):
     return crudReturn(appointment.delete())
 
-@router.post('/apTakesPlace/<int:idAp>/<int:idB>')
-@requiresRole(['administrative'])
-@passJsonData
-def createApTakesPlace(data:dict, **kwargs):
-    return crudReturn(ApTakesPlace(**data).insert())
-
-@router.get('/apTakesPlace/<int:idAp>')
-@requiresAuth
-@apRelationExists(ApTakesPlace)
-def getApTakesPlace(obj:ApTakesPlace, **kwargs):
-    return crudReturn(obj)
-
-@router.route('/apTakesPlace/<int:idAp>', methods=['PUT', 'PATCH'])
-@passJsonData
-@requiresRole(['administrative'])
-@apRelationExists(ApTakesPlace)
-def updateApTakesPlace(obj:ApTakesPlace, data:dict, **kwargs):
-    return crudReturn(obj.update(data))
-
-# -- Users <> appointment
-
 @router.post('/assignedTo')
 @requiresRole(['administrative'])
+@validDataValues(Appointment, ['id'], ['idAp'])
+@validDataValues(Doctor, ['id'], ['idDoc'])
 @passJsonData
 def createAssignedTo(data:dict, **kwargs):
     return crudReturn(AssignedTo(**data).insert())
 
 @router.route('/assignedTo/<int:idAp>/<int:idDoc>', methods=['PUT', 'PATCH'])
 @requiresRole(['administrative'])
+@appointmentExists(AssignedTo, ['idAp', 'idDoc'], ['idAp', 'idDoc'])
+@validDataValues(Doctor, ['id'], ['idDoc'])
 @passJsonData
-@apRelationExists(AssignedTo, ['idAp', 'idDoc'], ['idAp', ['idDoc']])
 def updateAssignedTo(obj:AssignedTo, data:dict, **kwargs):
+    data.pop('idAp', None)
     return crudReturn(obj.update(data))
 
 @router.get('/assignedTo/<int:idAp>')
@@ -119,6 +88,8 @@ def getAssignedTo(idAp:int=None, idDoc:int=None, **kwargs):
         
 @router.post('/attendsTo')
 @requiresRole(['administrative'])
+@validDataValues(Appointment, ['id'], ['idAp'])
+@validDataValues(Patient, ['id'], ['idPa'])
 @passJsonData
 def createAttendsTo(data:dict, **kwargs):
     return crudReturn(AttendsTo(**data).insert())
@@ -126,8 +97,11 @@ def createAttendsTo(data:dict, **kwargs):
 @router.route('/attendsTo/<int:idAp>/<int:idPa>', methods=['PUT', 'PATCH'])
 @requiresRole(['administrative'])
 @passJsonData
-@apRelationExists(AttendsTo, ['idAp', 'idPa'], ['idAp', ['idPa']])
+@appointmentExists(AttendsTo, ['idAp', 'idPa'], ['idAp', 'idPa'])
+@passJsonData
 def updateAttendsTo(obj:AttendsTo, data:dict, **kwargs):
+    data.pop('idAp', None)
+    data.pop('idPa', None)
     return crudReturn(obj.update(data))
 
 @router.get('/attendsTo/<int:idAp>')
@@ -142,86 +116,11 @@ def getAttendsTo(idAp:int=None, idPa:int=None, **kwargs):
 
 @router.delete('/attendsTo/<int:idAp>/<int:idPa>')
 @requiresRole(['administrative'])
-@passJsonData
-@apRelationExists(AttendsTo, ['idAp', 'idPa'], ['idAp', 'idPa'])
+@appointmentExists(AttendsTo, ['idAp', 'idPa'], ['idAp', 'idPa'])
 def deleteAttendsTo(obj:AttendsTo, **kwargs):
     return crudReturn(obj.delete())
 
 # # -- DATA INPUTTED WHEN A PATIENT IS BEING INTERVIEWED IN AN APPOINTMENT
-
-def passSuffering(Model:BaseModel, idField:str, nameField:str='name'):
-    def decorator(f):
-        @wraps(f)
-        @passJsonData
-        def wrapper(data:dict, *args,**kwargs):
-            if data.get(idField, None) is None:
-                _entity = Model.insertOrSelect({nameField: data[nameField]})
-                data[idField] = _entity.id
-                data.pop(nameField)
-            return f(*args, **kwargs, data=data)
-        
-        return wrapper
-    return decorator
-
-@router.post('/registersSy')
-@requiresRole(['doctor', 'administrative'])
-@passJsonData
-@passSuffering(Symptom, 'idSy')
-def createRegistersSy(data:dict, **kwargs):
-    return crudReturn(RegistersSy(**data).insert())
-
-@router.delete('/registersSy')
-@requiresRole(['doctor', 'administrative'])
-@passJsonData
-@passSuffering(RegistersSy, 'idSy')
-def deleteRegistersSy(data:dict, **kwargs):
-    return crudReturn(RegistersSy.selectOne({'idAp' : data['idAp'], 'idPa' : data['idPa'], 'idSy' : data['idSy']}).delete())
-
-@router.get('/registersSy/<int:idAp>/<int:idPa>')
-@requiresRole(['self', 'doctor', 'administrative'])
-@passJsonData
-def getRegistersSy(idAp:int, idPa:int, **kwargs):
-    return crudReturn(RegistersSy.selectMany({'idAp': idAp, 'idPa': idPa}))
-
-@router.post('/registersCs')
-@requiresRole(['doctor', 'administrative'])
-@passJsonData
-@passSuffering(ClinicalSign, 'idCs')
-def createRegistersCs(data:dict, **kwargs):
-    return crudReturn(RegistersCs(**data).insert())
-
-@router.delete('/registersCs')
-@requiresRole(['doctor', 'administrative'])
-@passJsonData
-@passSuffering(RegistersCs, 'idCs')
-def deleteRegistersCs(data:dict, **kwargs):
-    return crudReturn(RegistersCs.selectOne({'idAp' : data['idAp'], 'idPa' : data['idPa'], 'idCs' : data['idCs']}).delete())
-
-@router.get('/registersCs/<int:idAp>/<int:idPa>')
-@requiresRole(['self', 'doctor', 'administrative'])
-@passJsonData
-def getRegistersCs(idAp:int, idPa:int, **kwargs):
-    return crudReturn(RegistersCs.selectMany({'idAp': idAp, 'idPa': idPa}))
-
-@router.post('/diagnoses')
-@requiresRole(['doctor', 'administrative'])
-@passJsonData
-@passSuffering(Disease, 'idDis')
-def createDiagnoses(data:dict, **kwargs):
-    return crudReturn(Diagnoses(**data).insert())
-
-@router.delete('/diagnoses')
-@requiresRole(['doctor', 'administrative'])
-@passJsonData
-@passSuffering(Diagnoses, 'idDis')
-def deleteDiagnoses(data:dict, **kwargs):
-    return crudReturn(Diagnoses.selectOne({'idAp' : data['idAp'], 'idPa' : data['idPa'], 'idDis' : data['idDis']}).delete())
-
-@router.get('/diagnoses/<int:idAp>/<int:idPa>')
-@requiresRole(['self', 'doctor', 'administrative'])
-@passJsonData
-def getDiagnoses(idAp:int, idPa:int, **kwargs):
-    return crudReturn(Diagnoses.selectMany({'idAp': idAp, 'idPa': idPa}))
 
 @router.post('/filter')
 @getCurrentRole
@@ -279,16 +178,12 @@ def filterAps(id:int, offset:int, limit:int, currentRole:str, data:dict={}, **kw
         tables.append('user')
         values.append(_doctorSurname1)
 
-    statementData = f"""
-    SELECT appointment.* FROM {', '.join(tables)}
-    {' WHERE ' + ' AND '.join(conditions) if len(conditions) > 0 else ''}
-    LIMIT {limit} OFFSET {offset}
-    """
+    statementData = f"""SELECT appointment.* FROM {', '.join(tables)}
+                        {' WHERE ' + ' AND '.join(conditions) if len(conditions) > 0 else ''}
+                        LIMIT {limit} OFFSET {offset}"""
 
-    statementCount = f"""
-    SELECT COUNT(appointment.id) FROM {', '.join(tables)}
-    {' WHERE ' + ' AND '.join(conditions) if len(conditions) > 0 else ''}
-    """
+    statementCount = f"""SELECT COUNT(appointment.id) FROM {', '.join(tables)}
+                        {' WHERE ' + ' AND '.join(conditions) if len(conditions) > 0 else ''}"""
 
     resultData = [{'appointment': asdict(Appointment(*ap))} for ap in db.execute(statementData, values).fetchall()]
 
@@ -300,9 +195,13 @@ def filterAps(id:int, offset:int, limit:int, currentRole:str, data:dict={}, **kw
 
         if isinstance(doc, User):
             r['doctor'] = userToReturn(doc, id, **kwargs)
+        else:
+            r['doctor'] = {}
 
         if isinstance(br, Branch):
             r['branch'] = asdict(br)
+        else:
+            r['branch'] = {}
 
         if _typeFilter == 'mine':
             imAttending = AttendsTo.selectOne({'idAp': r['appointment']['id'], 'idPa': _id})

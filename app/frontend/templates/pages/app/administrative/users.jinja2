@@ -1,5 +1,5 @@
-{% extends 'layouts/app-base.html' %}
-{% from 'components/app/users-table.html' import usersTable with context%}
+{% extends 'layouts/app-base.jinja2' %}
+{% from 'components/app/users-table.jinja2' import usersTable with context%}
 {% block title %}Users{% endblock %}
 {% block pageContent %}
 <div class="w-full h-full px-6 lg:px-10">
@@ -78,29 +78,33 @@
     window.location.href = `/app/update-user/${id}`;
   }
 
-  const deleteUser = async (id) => {
-    //TODO: Ask for confirmation
-    await fetch('/api/users', {
-      method: "DELETE",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        id: id
-      })
-    })
+  const deleteUserConfirm = (id) => {
+    document.body.innerHTML += generateConfirmationModal(id, 'deleteUser')
+  }
 
-    document.getElementById(`row-${id}`).remove();
+  const deleteUser = async (id, mode='confirm') => {
+    if (mode === 'confirm'){
+          await fetch(`/api/users/${id}`, {
+            method: "DELETE",
+            headers: {
+              Accept: "application/json",
+              "Content-Type": "application/json",
+            }
+        })
 
-    await loadUsers(offset);
-    await setPagination(
-      "user",
-      offset,
-      limit,
-      paginationContainer,
-      "loadUsers"
-    );
+        document.getElementById(`row-${id}`).remove();
+
+        await loadUsers(offset);
+        await setPagination(
+          "user",
+          offset,
+          limit,
+          paginationContainer,
+          "loadUsers"
+        );
+    }
+
+    document.getElementById(`modal-${id}`).remove();
   }
 
   (async function () {

@@ -54,7 +54,7 @@ class User(BaseModel):
         self.photoUrl = photoUrl
         
     @classmethod
-    def select(cls, items: dict={}, operator:str = 'AND', shape='list', offset:int=None, limit:int=None,  paginationOnly:bool=False):
+    def select(cls, items: dict={}, operator:str = 'AND', shape='list', offset:int=None, limit:int=None):
         try:
             extraFilters:dict = items.get('extraFilters', None)
             if extraFilters is not None:
@@ -70,7 +70,8 @@ class User(BaseModel):
         try:
             self.password = generate_password_hash(self.password)
         except:
-            self.password = generate_password_hash(self.id)
+            if self.id:
+                self.password = generate_password_hash(self.id)
 
         return super().insert()
 

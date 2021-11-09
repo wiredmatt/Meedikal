@@ -1,6 +1,6 @@
-{% from "components/app/form-field.html" import formField with context %}
-{% from "components/app/users-table.html" import usersTable with context %}
-{% extends 'layouts/app-base.html' %}
+{% from "components/app/form-field.jinja2" import formField with context %}
+{% from "components/app/users-table.jinja2" import usersTable with context %}
+{% extends 'layouts/app-base.jinja2' %}
 
 {% block title %}{{'Create' if 'create' in request.endpoint else 'Update'}} Appointment{% endblock %}
 
@@ -67,7 +67,7 @@
 
   <h1 class="pt-4 text-lg font-bold text-center w-full">Select a branch for the appointment to take place</h1>
   <div class="h-4/5 w-full overflow-y-auto pt-1">
-    {% include 'components/branches.html' %}
+    {% include 'components/branches.jinja2' %}
   </div>
 
   <h1 class="pt-4 text-lg font-bold text-center w-full">Select a Doctor for the appointment</h1>

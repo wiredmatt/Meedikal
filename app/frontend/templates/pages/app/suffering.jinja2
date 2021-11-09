@@ -1,7 +1,7 @@
-{% from "components/app/form-field.html" import formField with context %}
-{% from "components/app/error-box.html" import errorBox with context %}
+{% from "components/app/form-field.jinja2" import formField with context %}
+{% from "components/app/error-box.jinja2" import errorBox with context %}
 
-{% extends 'layouts/app-base.html' %}
+{% extends 'layouts/app-base.jinja2' %}
 {% block title %}{{'Create' if 'create' in request.endpoint else 'Update'}} {{sufferingType}}{% endblock %}
 
 {% block pageContent %}

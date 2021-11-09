@@ -31,7 +31,7 @@ def paginated(offset:int=0, limit:int=10, max:int=10, tablename:str=None):
     def decorator(f):
         @passJsonData
         @wraps(f)
-        def wrapper(data:dict=None, *args, **kwargs):
+        def wrapper(data:dict={}, *args, **kwargs):
             total = max
 
             if tablename is not None:
@@ -77,4 +77,24 @@ def resourceExists(Model:BaseModel, idFields:list[str], idArgs:list[str], abort=
             return f(obj=obj, *args, **kwargs)
         
         return wrapper
+    return decorator
+
+def validDataValues(Model:BaseModel, idFields:list[str], dataKeys:list[str], abort=True):
+    def decorator(f):
+            @wraps(f)
+            @passJsonData
+            def wrapper(data:dict={},*args, **kwargs):
+                conditions = {}
+
+                for key, idF in zip(dataKeys, idFields):
+                    conditions[idF] = data.get(key)
+
+                obj = Model.selectOne(conditions)
+
+                if obj is None and abort:
+                    raise ResourceNotFound
+
+                return f(*args, **kwargs)
+            
+            return wrapper
     return decorator

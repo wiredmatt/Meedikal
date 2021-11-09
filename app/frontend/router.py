@@ -10,15 +10,15 @@ frontendRouter.register_blueprint(appRouter)
 
 @frontendRouter.get('/')
 def index():
-    return render_template('pages/landing/index.html')
+    return render_template('pages/landing/index.jinja2')
 
 @frontendRouter.get('/contact')
 def contact():
-    return render_template('pages/landing/contact.html')
+    return render_template('pages/landing/contact.jinja2')
 
 @frontendRouter.get('/plans')
 def plans():
-    return render_template('pages/landing/plans.html')
+    return render_template('pages/landing/plans.jinja2')
 
 @frontendRouter.get('/login')
 def login():
@@ -29,13 +29,13 @@ def login():
         pass
 
     if token is None:
-        return render_template('pages/landing/login.html')
+        return render_template('pages/landing/login.jinja2')
     else:
         return redirect('/app')
 
 @frontendRouter.get('/affiliate')
 def affiliate():
-    return render_template('pages/landing/affiliate.html')
+    return render_template('pages/landing/affiliate.jinja2')
 
 @frontendRouter.context_processor
 def globalVars():

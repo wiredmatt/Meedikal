@@ -1,5 +1,5 @@
-{% extends "layouts/base.html" %}
-{% from "components/app/modal.html" import modal %}
+{% extends "layouts/base.jinja2" %}
+{% from "components/app/modal.jinja2" import modal %}
 
 {% block content %}
 <script>
@@ -30,9 +30,9 @@
   </path>
 </svg> ')}}
 <div class="flex-1">
-  {% include 'components/app/sidebar.html' %}
+  {% include 'components/app/sidebar.jinja2' %}
   <div class="flex flex-col w-full h-screen">
-    {% include 'components/app/titlebar.html' %}
+    {% include 'components/app/titlebar.jinja2' %}
     <div class="lg:ml-64 h-full">
       {% block pageContent %}{% endblock %}
     </div>

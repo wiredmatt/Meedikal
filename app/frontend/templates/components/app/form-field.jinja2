@@ -16,8 +16,8 @@
     {{name}}
   </span>
   {% endif %}
-  <div class="flex flex-wrap items-center justify-center md:justify-start px-4 gap-1 w-4/6">
-    <div class="flex flex-row w-full" id="container-{{name}}">
+  <div class="flex flex-wrap items-center justify-center md:justify-start px-4 gap-1 w-4/6 h-full">
+    <div class="flex flex-wrap" id="container-{{name}}">
       {% if canAdd %}
         {% for v in values %} 
           {{chip(v[displayAttr], "white", True, 'bg-turqoise', chipAction(v[displayAttr], fn, icon))}}

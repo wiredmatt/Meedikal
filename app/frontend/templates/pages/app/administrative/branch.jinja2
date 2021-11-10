@@ -34,21 +34,27 @@
 
         googleMapsSrc = document.getElementById('GoogleMaps').value;
 
+        let name = document.getElementById('Name');
+        let phoneNumber = document.getElementById('Phone');
+        let location = document.getElementById('Location');
+
         let body = {
-            name: document.getElementById('Name').value,
-            phoneNumber: document.getElementById('Phone').value,
-            location: document.getElementById('Location').value,
+            name: name.value || null,
+            phoneNumber: phoneNumber.value || null,
+            location: location.value || null,
             googleMapsSrc: null
         }
+
+        if (!validateLength(name, 3 ,`Provide a name for this branch.`)){ return; }
+        if (!validateType(phoneNumber, 'numeric' ,`Provide a phone number for this branch.`)){ return; }
+        if (!validateLength(location, 3 ,`Provide a location for this branch.`)){ return; }
 
         if (googleMapsSrc) {
             try {
                 body.googleMapsSrc = googleMapsSrc.split('src=')[1].split(' width')[0].replace('"', '')
             } catch {
                 if (!googleMapsSrc.startsWith('https://www.google.com/maps/embed')) {
-                    toggleLoadingModal();
-                    errorBox.classList.remove("hidden");
-                    errorText.textContent = 'Invalid googlemaps iframe.'
+                    return showError('Invalid googlemaps iframe.');
                 } else {
                     body.googleMapsSrc = googleMapsSrc
                 }

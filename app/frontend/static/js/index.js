@@ -214,7 +214,7 @@ const generateSpecialtiesField = (chips) => `
     Specialties
   </span>
   <div class="shadow-sm flex flex-wrap items-center justify-center md:justify-start px-4 gap-1 w-4/6">
-    <div class="flex flex-row w-full" id="container-Specialties">
+    <div class="flex flex-wrap" id="container-Specialties">
       ${chips}
     </div>
     <div class="inline-flex items-center rounded-full border border-gray-200 px-1 py-2 h-8">

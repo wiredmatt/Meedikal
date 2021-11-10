@@ -28,7 +28,9 @@
                 </div>
                 {% endif %}
             {% endif %}
+            {% if branch.googleMapsSrc %}
             <iframe class="border-2 border-turqoise w-full mt-2" src="{{branch.googleMapsSrc}}" frameborder="0" allowfullscreen="" loading="eager" height="200" width="200"></iframe>      
+            {% endif %}
         </div>
     </div>
     {% endfor %}

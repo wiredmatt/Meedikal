@@ -10,12 +10,12 @@
           <div class="shadow-xl flex flex-col w-full py-1 space-y-1" id="roles">
             {% if user.get('user', {}).get('id', -1) == me.user.id or myRole == 'administrative'%}
             <div id="pfp-upload" class="relative w-full h-full md:w-44 md:h-44 m-auto px-2 md:px-0">
-              <img id="user-pfp" src="{{url_for('images.returnResource', resource=user.get('user', {}).get('photoUrl', '/images/user-placeholder.png').replace('images/', ''))}}" class="rounded-full w-full h-full py-1 px-1 border-turqoise border-2"/>
-               <form id="pfp-form" enctype="multipart/form-data">
+              <img id="user-pfp" src="{{url_for('images.returnResource', resource=user.get('user', {}).get('photoUrl', '').replace('images/', ''))}}" class="rounded-full w-full h-full py-1 px-1 border-turqoise border-2"/>
+              <form id="pfp-form" enctype="multipart/form-data">
                 <label for="file-input" class="cursor-pointer absolute right-0 bottom-1 px-2 py-2 rounded-full hover:bg-turqoise">
                   <img src="{{url_for('static', filename='icons/camera.svg')}}" width="16" height="16"/>
                 </label>
-                <input id="file-input" type="file" name="file" accept="image/png, image/jpg, image/jpeg" style="display: none;"/>
+                <input id="file-input" type="file" name="file" accept="image/png, image/jpg, image/jpeg" style="display: none;" onchange="changePfp(this)"/>
               </form>
             </div>
             {% endif %}
@@ -41,7 +41,7 @@
         {{formField("2nd Surname", user.get('user', {}).get('surname2', '') or '', readOnly)}} 
         {{formField("Sex", user.get('user', {}).get('sex', '') or '', readOnly)}} 
         {{formField("Genre", user.get('user', {}).get('genre', '') or '', readOnly)}}
-        {{formField("Birthdate", user.get('user', {}).get('birthdate', '') or '', readOnly)}}
+        {{formField("Birthdate", user.get('user', {}).get('birthdate', '').split(' ')[0] or '', readOnly)}}
         {{formField("Email", user.get('user', {}).get('email', '') or '', readOnly)}} 
         {{formField("Location", user.get('user', {}).get('location', '') or '', readOnly)}}
         {{formField("Status", "active" if user.get('user', {}).get('active', True) else "inactive", readOnly) }}
@@ -97,8 +97,9 @@
   let userPfpField = document.getElementById('file-input');
   let formPfp = document.getElementById('pfp-form');
 
-  userPfpField.addEventListener('change', (e) => {
-    userPfp.src = URL.createObjectURL(e.target.files[0]);
-  })
+  const changePfp = (el) => {
+    document.getElementById('user-pfp').src = URL.createObjectURL(el.files[0]);
+  }
+
 </script>
 {% endmacro %}

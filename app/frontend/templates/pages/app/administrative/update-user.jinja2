@@ -88,7 +88,7 @@
     const updateUser = async() => {
         toggleLoadingModal();
         
-        if (selectedUserRoles.length < 1){
+        if (user.roles.length < 1){
             toggleRole('patient');
         }
         
@@ -114,8 +114,8 @@
         let data = await res.json();
 
         if (res.status === 200) {
-            if (userPfpField.files.length){
-                const formData = new FormData(formPfp);
+            if (document.getElementById('file-input').files.length){
+                const formData = new FormData(document.getElementById('pfp-form'));
             
                 await fetch(`/api/users/updatePhoto/${user.user.id}`, {
                     method: 'PUT',

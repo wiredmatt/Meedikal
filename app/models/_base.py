@@ -9,7 +9,6 @@ cursor = db.cursor()
 def getTotal(tablename:str, operator:str='AND', data:dict={}) -> int:
     _module = __import__('models')
     _class:'BaseModel' = getattr(_module, tablename[:1].upper() + tablename[1:])
-    print(tablename, data, _class)
     return _class.count(data or {}, operator)
 
 @dataclass
@@ -45,7 +44,7 @@ class BaseModel:
         return [cls(*r) for r in result]
 
     @classmethod
-    def select(cls, items:dict, operator='AND', offset:int=None, limit:int=None, shape:str='list') -> typing.Union['BaseModel', list['BaseModel']]:
+    def buildQueryComponents(cls, items:dict={}) -> tuple:
         tables = [cls.__tablename__]
         conditions = []
         values = []
@@ -64,27 +63,33 @@ class BaseModel:
                 
                 if isinstance(v, dict):
                     _operator = v.get('operator', '=' if v.get('value', None) is not None else 'IS')                  
-                    value = v.get('value', v)
+                    value = v.get('value', None)
                     joins = v.get('joins', False)
             else:
                 k = f'{cls.__tablename__}.{k}'
 
-            conditions.append(f"{k} {_operator} ?")
-            values.append(value)
-
             if joins:
-                table = str(v).split(".")[0]
+                table = str(value).split(".")[0]
                 if table not in tables:
                     tables.append(table)
+                conditions.append(f"{k} {_operator} {value}")
+            else:
+                conditions.append(f"{k} {_operator} ?")
+                values.append(value)
+
+        return conditions, values, tables
+
+    @classmethod
+    def select(cls, items:dict={}, operator:str='AND', offset:int=None, limit:int=None, shape:str='list') -> typing.Union['BaseModel', list['BaseModel']]:
                     
+        conditions, values, tables = cls.buildQueryComponents(items)
+
         statement = f"""
                     SELECT {cls.__tablename__}.* FROM {", ".join(tables)} 
                     {'WHERE ' + f" {operator} ".join(conditions) if len(conditions) > 0 else ''}
                     {f"LIMIT {limit} OFFSET {offset}" if limit is not None and offset is not None else ''}
                     """
-
-        values = [v for v in items.values()]
-
+                    
         result = db.execute(statement, values)
 
         if shape == 'list':
@@ -107,15 +112,13 @@ class BaseModel:
 
     @classmethod
     def count(cls, items:dict, operator='AND') -> int:
-        conditions = [f'{k} {"=" if v is not None else "IS"} ?' for k,v in items.items()]
+        conditions, values, tables = cls.buildQueryComponents(items)
 
         statement = f"""
-                    SELECT COUNT(*) FROM {cls.__tablename__}
-                    {'WHERE ' + {f" {operator} ".join(conditions)} if len(conditions) > 0 else ''}
+                    SELECT COUNT(*) FROM {", ".join(tables)} 
+                    {'WHERE ' + f" {operator} ".join(conditions) if len(conditions) > 0 else ''}
                     """
-
-        values = [v for v in items.values()]
-
+                    
         result = db.execute(statement, values)
 
         return result.fetchone()[0]

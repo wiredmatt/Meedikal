@@ -54,7 +54,7 @@ class User(BaseModel):
         self.photoUrl = photoUrl or '/images/user-placeholder.png'
         
     @classmethod
-    def select(cls, items: dict={}, operator:str = 'AND', shape='list', offset:int=None, limit:int=None):
+    def parseItems(cls, items: dict):
         try:
             extraFilters:dict = items.get('extraFilters', None)
             if extraFilters is not None:
@@ -63,8 +63,30 @@ class User(BaseModel):
             
             items.pop('extraFilters', None)
             items.pop('password', None) # doesn't make sense to filter by password
-        finally:
-            return super().select(items, operator, offset, limit, shape)
+        except:
+            pass
+        
+        return items
+
+    @classmethod
+    def select(cls, items: dict={}, operator:str = 'AND', shape='list', offset:int=None, limit:int=None):
+        items = cls.parseItems(items)
+        return super().select(items, operator, offset, limit, shape)
+
+    @classmethod
+    def selectOne(cls, items: dict={}, operator:str = 'AND'):
+        items = cls.parseItems(items)
+        return super().selectOne(items, operator)
+    
+    @classmethod
+    def selectMany(cls, items: dict={}, operator:str = 'AND', offset:int=None, limit:int=None):
+        items = cls.parseItems(items)
+        return super().selectMany(items, operator, offset, limit)
+
+    @classmethod
+    def count(cls, items: dict={}, operator:str = 'AND'):
+        items = cls.parseItems(items)
+        return super().count(items, operator)
     
     def insert(self) -> 'User':
         try:

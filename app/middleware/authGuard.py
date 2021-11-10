@@ -1,4 +1,4 @@
-from util.errors import MissingCookieError, MissingRoleError
+from util.errors import MissingCookieError, MissingRoleError, InactiveUserError
 from flask import session
 from models.User import User, AuthUser
 from functools import wraps
@@ -16,6 +16,10 @@ def requiresAuth(f):
             raise MissingCookieError()
         else:
             id = int(AuthUser.verifyToken(token))
+            user: User = User.select({'id': id}, shape='one')
+            if not user.active:
+                raise InactiveUserError
+                
             return f(*args, **kwargs, id=id)
         
     return decorator

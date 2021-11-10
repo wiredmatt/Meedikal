@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 from config import DevelopmentConfig, ProductionConfig, Config
 from routers import apiRouter, frontendRouter, imagesRouter
 import mimetypes 
-import errorhandlers
+# import errorhandlers
 
 load_dotenv() # load .env file
 

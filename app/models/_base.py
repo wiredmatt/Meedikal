@@ -60,14 +60,14 @@ class BaseModel:
                 
                 if table not in tables:
                     tables.append(table)
-                
-                if isinstance(v, dict):
-                    _operator = v.get('operator', '=' if v.get('value', None) is not None else 'IS')                  
-                    value = v.get('value', None)
-                    joins = v.get('joins', False)
             else:
                 k = f'{cls.__tablename__}.{k}'
-
+                
+            if isinstance(v, dict):
+                _operator = v.get('operator', '=' if v.get('value', None) is not None else 'IS')                  
+                value = v.get('value', None)
+                joins = v.get('joins', False)
+            
             if joins:
                 table = str(value).split(".")[0]
                 if table not in tables:
@@ -76,6 +76,8 @@ class BaseModel:
             else:
                 conditions.append(f"{k} {_operator} ?")
                 values.append(value)
+        
+        print(conditions, values)
 
         return conditions, values, tables
 
@@ -91,7 +93,6 @@ class BaseModel:
                     """
                     
         result = db.execute(statement, values)
-
         if shape == 'list':
             return [cls(*r) for r in result.fetchall()]
         else:

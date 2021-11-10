@@ -110,6 +110,10 @@ def missingCookieError(e):
 def missingRoleErrorF(e: MissingRoleError):
     return redirect('/app')
 
+@frontendRouter.errorhandler(InactiveUserError)
+def missingRoleErrorF(e):
+    return redirect('/disabled-account')
+
 @frontendRouter.errorhandler(NotFound)
 @frontendRouter.errorhandler(ResourceNotFound)
 def notFound(e):

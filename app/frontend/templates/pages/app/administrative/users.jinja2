@@ -23,7 +23,7 @@
         ),
         generateCell(userId),
         generateCell(obj["user"]["sex"]),
-        generateCell(obj["user"]["birthdate"].split("T")[0]),
+        generateCell(obj["user"]["birthdate"].split(" ")[0]),
       ];
 
       if (me.user.id !== userId){

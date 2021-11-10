@@ -22,8 +22,6 @@ class DocHasSpec(BaseModel):
     idSpec:int
     idDoc:int
 
-    detail:Optional[str] = None
-
     def __init__(self,idSpec,idDoc):
         self.idSpec = idSpec
         self.idDoc = idDoc

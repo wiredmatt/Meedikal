@@ -12,7 +12,7 @@
   const updateUser = async() => {
     toggleLoadingModal();
       
-    let res = await fetch(`/api/users/{{me.user.id}}`, {
+    let res = await fetch(`/api/users/${me.user.id}`, {
         method: "PUT",
         headers: {
             Accept: "application/json",
@@ -37,7 +37,7 @@
         if (userPfpField.files.length){
             const formData = new FormData(formPfp);
         
-            await fetch(`/api/users/updatePhoto/{{me.user.id}}`, {
+            await fetch(`/api/users/updatePhoto/${me.user.id}`, {
                 method: 'PUT',
                 body: formData
             });
@@ -49,66 +49,50 @@
         errorBox.classList.remove("hidden");
         toggleLoadingModal();
     }
-};
+  };
 
-  const deletePhone = (phone) => {
-    fetch("/api/users/phoneNumbers", {
-      method: "DELETE",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        userPhone: [
-          {
-            id: parseInt("{{id}}"),
+  const deletePhone = async(phone) => {
+    toggleLoadingModal();
+    await fetch(`/api/users/phoneNumbers/${me.user.id}`, {
+        method: "DELETE",
+        headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            id: me.user.id,
             phone: phone,
-          },
-        ],
-      }),
-    }).then((res) => {
-      res.json().then((data) => {
-        if (res.status == 200){
-          //TODO: show popup / modal saying OK
-          errorBox.classList.add("hidden");
-          document.getElementById(phone).remove();
-        }else{
-          errorText.textContent = data.error;
-          errorBox.classList.remove("hidden");
-        }
-      });
-    });
-  }
+        })
+    })
 
-  const addPhone = () => {
+    me.phoneNumbers = me.phoneNumbers.filter(p => p !== phone);
+    document.getElementById(phone).remove();
+    toggleLoadingModal();
+  } 
+
+  const addPhone = async() => {
+    toggleLoadingModal();
     let phone = document.getElementById('new-Phones').value;
 
-    fetch("/api/users/phoneNumbers", {
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        userPhone: [
-          {
-            id: parseInt("{{id}}"),
-            phone: phone,
-          },
-        ],
-      }),
-    }).then((res) => {
-      res.json().then((data) => {
-        if (res.status == 200){
-          //TODO: show popup / modal saying OK
-          errorBox.classList.add("hidden");
-          phonesContainer.innerHTML += generatePhoneChip(phone)
-        }else{
-          errorText.textContent = data.error;
-          errorBox.classList.remove("hidden");
-        }
-      });
-    });
+    if (!me.phoneNumbers.includes(phone) && phone.trim().length > 0 && parseInt(phone)){
+        await fetch(`/api/users/phoneNumbers/${me.user.id}`, {
+            method: "POST",
+            headers: {
+                Accept: "application/json",
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                id: me.user.id,
+                phone: phone,
+            }),
+        })
+
+        me.phoneNumbers.push(phone);
+        phonesContainer.innerHTML += generatePhoneChip(phone);
+    }
+
+    document.getElementById('new-Phones').value = '';
+    toggleLoadingModal();
   }
 
   const swapRole = (role) => {

@@ -182,15 +182,18 @@ class BaseModel:
 
         return True if cursor.rowcount > 0 else False
 
-    def insertOrSelect(self, commit=True) -> 'BaseModel':
+    def insertOrSelect(self, idField=None, commit=True) -> 'BaseModel':
         try:
-            self.insert(commit)
+            return self.insert(commit)
         except: # record already exists
-            if not self.__compoundIdField__:
-                return self.select({self.__idField__ : getattr(self, self.__idField__)}, shape='one')
+            if idField is not None:
+                return self.selectOne({idField : getattr(self, idField)})
             else:
-                idfields = self.__idField__.split(",")
-                conditions = {}
-                for idF in idfields:
-                    conditions[idF] = getattr(self, idF)
-                return self.select(conditions, shape='one')
+                if not self.__compoundIdField__:
+                    return self.selectOne({self.__idField__ : getattr(self, self.__idField__)})
+                else:
+                    idfields = self.__idField__.split(",")
+                    conditions = {}
+                    for idF in idfields:
+                        conditions[idF] = getattr(self, idF)
+                    return self.selectOne(conditions)

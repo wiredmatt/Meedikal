@@ -170,7 +170,7 @@ def getSpOfDoc(idDoc:int, **kwargs):
 @requiresRole(['administrative'])
 def addOrDeleteDocsSpec(idDoc:int, title:str=None):
     if request.method == 'POST':
-        _sp: Specialty = Specialty(title=title).insertOrSelect()
+        _sp: Specialty = Specialty(title=title).insertOrSelect('title')
         result = asdict(DocHasSpec(_sp.id, idDoc).insert())
         result['title'] = title
     else:

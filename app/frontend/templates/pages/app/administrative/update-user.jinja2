@@ -11,7 +11,8 @@
     let availableRoles = ["patient", "administrative", "doctor"];
 
     let rolesContainer = document.getElementById("roles");
-
+    let phonesContainer = document.getElementById('container-Phones');
+     
     availableRoles.forEach((r) => {
         if (!user['roles'].includes(r)) {
             rolesContainer.innerHTML += generateRoleChip(r, roleColors[r]);
@@ -143,6 +144,8 @@
                 phone: phone,
             })
         })
+
+        user.phoneNumbers = user.phoneNumbers.filter(p => p !== phone);
         document.getElementById(phone).remove();
         toggleLoadingModal();
     }
@@ -151,7 +154,7 @@
         toggleLoadingModal();
         let phone = document.getElementById('new-Phones').value;
 
-        if (!user.phoneNumbers.includes(phone) && phone.trim().length > 0 && parseInt(value)){
+        if (!user.phoneNumbers.includes(phone) && phone.trim().length > 0 && parseInt(phone)){
             await fetch(`/api/users/phoneNumbers/${user.user.id}`, {
                 method: "POST",
                 headers: {
@@ -179,7 +182,7 @@
             user.specialties = [];
         }
 
-        if (!user.specialties.includes(specialty) && value.trim().length > 0) {  
+        if (!user.specialties.includes(specialty) && specialty.trim().length > 0) {  
             await fetch(`/api/users/doctors/specialties/${user.user.id}/${specialty}`, {
                 method: 'POST',
                 headers: {
@@ -191,7 +194,7 @@
             document.getElementById('container-Specialties').innerHTML += generateSpecialtyChip(specialty);
         }
 
-        document.getElementById('new-Phones').value = '';
+        document.getElementById('new-Specialties').value = '';
         toggleLoadingModal();
     }
 

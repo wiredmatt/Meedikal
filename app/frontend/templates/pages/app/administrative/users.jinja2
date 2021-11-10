@@ -13,7 +13,6 @@
 <script>
   const drawTable = (_data) => {
     let rows = Array(_data.length);
-
     for (let obj of _data) {
       let userId = obj["user"]["id"];
 
@@ -79,21 +78,21 @@
   }
 
   const deleteUserConfirm = (id) => {
-    document.body.innerHTML += generateConfirmationModal(id, 'deleteUser')
+    let _wrapper = document.createElement('div');
+    _wrapper.id = `wrapper-${id}`;
+    _wrapper.innerHTML = generateConfirmationModal(id, 'deleteUser');
+    document.body.appendChild(_wrapper);
   }
 
   const deleteUser = async (id, mode='confirm') => {
     if (mode === 'confirm'){
-          await fetch(`/api/users/${id}`, {
+        await fetch(`/api/users/${id}`, {
             method: "DELETE",
             headers: {
               Accept: "application/json",
               "Content-Type": "application/json",
             }
         })
-
-        document.getElementById(`row-${id}`).remove();
-
         await loadUsers(offset);
         await setPagination(
           "user",
@@ -104,7 +103,7 @@
         );
     }
 
-    document.getElementById(`modal-${id}`).remove();
+    document.getElementById(`wrapper-${id}`).remove();
   }
 
   (async function () {

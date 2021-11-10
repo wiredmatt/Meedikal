@@ -9,41 +9,47 @@
 
   let phonesContainer = document.getElementById('container-Phones');
 
-  const updateUser = () => {
-    fetch("/api/users", {
-      method: "PUT",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        name1: name1Field.value,
-        name2: name2Field.value,
-        surname1: surname1Field.value,
-        surname2: surname2Field.value,
-        sex: sexField.value,
-        genre: genreField.value,
-        birthdate: birthdateField.value,
-        email: emailField.value,
-        location: locationField.value,
-      }),
-    }).then((res) => {
-      res.json().then((data) => {
-        if (res.status == 200){
-          //TODO: show popup / modal saying OK
-          errorBox.classList.add("hidden");
-          showOkModal();
-        }else{
-          if (data.extraMessage){
-            errorText.textContent = data.extraMessage;
-          }else{
-            errorText.textContent = data.error;
-          }
-          errorBox.classList.remove("hidden");
+  const updateUser = async() => {
+    toggleLoadingModal();
+      
+    let res = await fetch(`/api/users/{{me.user.id}}`, {
+        method: "PUT",
+        headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            name1: name1Field.value,
+            name2: name2Field.value,
+            surname1: surname1Field.value,
+            surname2: surname2Field.value,
+            sex: sexField.value,
+            genre: genreField.value,
+            birthdate: birthdateField.value,
+            email: emailField.value,
+            location: locationField.value,
+        }),
+    })
+    
+    let data = await res.json();
+
+    if (res.status === 200) {
+        if (userPfpField.files.length){
+            const formData = new FormData(formPfp);
+        
+            await fetch(`/api/users/updatePhoto/{{me.user.id}}`, {
+                method: 'PUT',
+                body: formData
+            });
         }
-      });
-    });
-  };
+        errorBox.classList.add("hidden");
+        showOkModal();
+    }else{
+        errorText.textContent = data.extraMessage || data.error;
+        errorBox.classList.remove("hidden");
+        toggleLoadingModal();
+    }
+};
 
   const deletePhone = (phone) => {
     fetch("/api/users/phoneNumbers", {

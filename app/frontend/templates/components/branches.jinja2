@@ -22,7 +22,7 @@
                     <a class="self-end md:self-start hover:bg-gray-200" href="/app/update-branch/{{branch.id}}">
                         <img src="{{url_for('static', filename='icons/edit.svg')}}" width="16" />
                     </a>
-                    <button onclick="deleteBranch('{{branch.id}}')" class="self-end md:self-start hover:bg-gray-200">
+                    <button onclick="deleteBranchConfirm('{{branch.id}}')" class="self-end md:self-start hover:bg-gray-200">
                         <img src="{{url_for('static', filename='icons/delete.svg')}}" width="16" />
                     </button>
                 </div>

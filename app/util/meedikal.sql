@@ -44,7 +44,7 @@ CREATE TABLE specialty (
     title VARCHAR(64) UNIQUE NOT NULL
 );
 
-CREATE TABLE DocHasSpec (
+CREATE TABLE docHasSpec (
     idSpec INTEGER NOT NULL,
     idDoc INTEGER NOT NULL,
 

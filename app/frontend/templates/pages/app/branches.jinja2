@@ -2,17 +2,26 @@
 {% block title %}Branches{% endblock %}
 {% block pageContent %}
 <script>
-    const deleteBranch = async(id) => {
-        await fetch(`/api/branches`, {
-            method: 'POST',
-            headers: {
-                Accept: "application/json",
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({id: id})
-        })
+    const deleteBranchConfirm = (id) => {
+        let _wrapper = document.createElement('div');
+        _wrapper.id = `wrapper-${id}`;
+        _wrapper.innerHTML = generateConfirmationModal(id, 'deleteBranch');
+        document.body.appendChild(_wrapper);
+    }
+    
+    const deleteBranch = async(id, mode='confirm') => {
+        if (mode === 'confirm'){
+            await fetch(`/api/branches/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    Accept: "application/json",
+                },
+            });
 
-        document.getElementById(id).remove();
+            document.getElementById(id).remove();
+        }
+
+        document.getElementById(`modal-${id}`).remove();
     }
 </script>
 <div class="w-full h-full px-6 lg:px-10 pt-4">

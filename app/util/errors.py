@@ -19,6 +19,9 @@ class ResourceNotFound(Exception):
 class InvalidSufferingType(Exception):
     pass
 
+class InactiveUserError(Exception):
+    pass
+
 class ExtensionNotAllowedError(Exception):
     allowed: list
     deniedExt: str

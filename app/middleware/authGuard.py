@@ -15,7 +15,7 @@ def requiresAuth(f):
         if token is None:
             raise MissingCookieError()
         else:
-            id = AuthUser.verifyToken(token)
+            id = int(AuthUser.verifyToken(token))
             return f(*args, **kwargs, id=id)
         
     return decorator

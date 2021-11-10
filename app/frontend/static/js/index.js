@@ -105,7 +105,7 @@ const nameCell = (name, photoUrl) => `
         <div class="flex-shrink-0 h-10 w-10">
           <img
             class="h-10 w-10 rounded-full"
-            src="${photoUrl || "/static/images/user-placeholder.png"}"
+            src=${photoUrl.startsWith("/") ? photoUrl : "/" + photoUrl}
           />
         </div>
         <div class="ml-4">
@@ -411,7 +411,7 @@ const setPagination = async (
               </button>
             `);
     }
-    paginationContainer.innerHTML = btns.join("\n");
+    paginationContainer.innerHTML = btns.join(" ");
     return total;
   } else {
     Promise.reject(data);

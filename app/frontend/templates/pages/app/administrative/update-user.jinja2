@@ -84,12 +84,14 @@
         toggleLoadingModal();
     }
 
-    const updateUser = () => {
+    const updateUser = async() => {
         toggleLoadingModal();
+        
         if (selectedUserRoles.length < 1){
             toggleRole('patient');
         }
-        fetch(`/api/users/${user.user.id}`, {
+        
+        let res = await fetch(`/api/users/${user.user.id}`, {
             method: "PUT",
             headers: {
                 Accept: "application/json",
@@ -106,18 +108,26 @@
                 email: emailField.value,
                 location: locationField.value,
             }),
-        }).then((res) => {
-            res.json().then((data) => {
-                if (res.status === 200) {
-                    errorBox.classList.add("hidden");
-                    showOkModal();
-                } else {
-                    errorText.textContent = data.extraMessage || data.error;
-                    errorBox.classList.remove("hidden");
-                    toggleLoadingModal();
-                }
-            });
-        });
+        })
+        
+        let data = await res.json();
+
+        if (res.status === 200) {
+            if (userPfpField.files.length){
+                const formData = new FormData(formPfp);
+            
+                await fetch(`/api/users/updatePhoto/${user.user.id}`, {
+                    method: 'PUT',
+                    body: formData
+                });
+            }
+            errorBox.classList.add("hidden");
+            showOkModal();
+        }else{
+            errorText.textContent = data.extraMessage || data.error;
+            errorBox.classList.remove("hidden");
+            toggleLoadingModal();
+        }
     };
 
     const deletePhone = async(phone) => {
@@ -141,18 +151,24 @@
         toggleLoadingModal();
         let phone = document.getElementById('new-Phones').value;
 
-        await fetch(`/api/users/phoneNumbers/${user.user.id}`, {
-            method: "POST",
-            headers: {
-                Accept: "application/json",
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                id: user.user.id,
-                phone: phone,
-            }),
-        })
-        phonesContainer.innerHTML += generatePhoneChip(phone);
+        if (!user.phoneNumbers.includes(phone) && phone.trim().length > 0 && parseInt(value)){
+            await fetch(`/api/users/phoneNumbers/${user.user.id}`, {
+                method: "POST",
+                headers: {
+                    Accept: "application/json",
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    id: user.user.id,
+                    phone: phone,
+                }),
+            })
+
+            user.phoneNumbers.push(phone);
+            phonesContainer.innerHTML += generatePhoneChip(phone);
+        }
+
+        document.getElementById('new-Phones').value = '';
         toggleLoadingModal();
     }
 
@@ -163,17 +179,19 @@
             user.specialties = [];
         }
 
-        if (!user.specialties.includes(specialty)) {
+        if (!user.specialties.includes(specialty) && value.trim().length > 0) {  
+            await fetch(`/api/users/doctors/specialties/${user.user.id}/${specialty}`, {
+                method: 'POST',
+                headers: {
+                    Accept: "application/json"
+                }
+            });
+
             user.specialties.push(specialty);
             document.getElementById('container-Specialties').innerHTML += generateSpecialtyChip(specialty);
         }
 
-        await fetch(`/api/users/doctors/specialties/${user.user.id}/${specialty}`, {
-            method: 'POST',
-            headers: {
-                Accept: "application/json"
-            }
-        });
+        document.getElementById('new-Phones').value = '';
         toggleLoadingModal();
     }
 

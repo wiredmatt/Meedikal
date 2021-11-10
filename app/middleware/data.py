@@ -1,6 +1,6 @@
 from models._base import BaseModel
-from util.errors import ResourceNotFound
-from util.errors import ExtensionNotAllowedError
+from util.errors import ResourceNotFound, ExtensionNotAllowedError
+from util.returnMessages import genericErrorReturn
 from flask import request
 from functools import wraps
 from models import getTotal
@@ -18,6 +18,9 @@ def passFile(allowedExtensions:list[str]):
         @wraps(f)
         def wrapper(*args,**kwargs):
             file = request.files.get('file', None)
+            if file is None:
+                return genericErrorReturn('missing file in formData')
+            
             extension = file.filename.rsplit('.')[1].lower()
             if extension not in allowedExtensions:
                 raise ExtensionNotAllowedError(allowedExtensions, extension)

@@ -29,21 +29,20 @@ def userToReturn(user: User, id:int=0, currentRole:str='', role=None, **kwargs):
 
     _user = asdict(user)
 
-    if user.id != id and currentRole != 'administrative':
+    phones = []
+
+    if user.id == id or currentRole == 'administrative':
+        phones = UserPhone.selectMany({'id': user.id})
+    else:
         _user.pop('email', None)
         _user.pop('location', None)
-        phones = []
-    else:
-        phones = UserPhone.selectMany({'id': id})
-        if len(phones) > 0:
-            phones = [p.phone for p in phones]
 
     obj = {'user': _user, 
            'roles': User.getRoles(user.id),
            'phoneNumbers': phones}
 
     if role == 'doctor':
-        hasSpec = DocHasSpec.selectMany({'id': id})
+        hasSpec = DocHasSpec.selectMany({'idDoc': id})
 
         if len(hasSpec) > 0:
             obj['specialties'] = [Specialty.selectOne({'id': sp.idSpec}).title for sp in hasSpec]
@@ -72,6 +71,7 @@ def createUser(data:dict, **kwargs):
 
 @router.route('/<int:idUser>', methods=['PUT', 'PATCH'])
 @requiresRole(['administrative', 'self'])
+@passJsonData
 @userExists()
 def updateUser(user:User, data:dict, **kwargs):
     return crudReturn(userToReturn(user.update(data), **kwargs))
@@ -87,7 +87,7 @@ def deleteUser(user:User, **kwargs):
 @passFile(['jpg', 'jpeg', 'png'])
 @userExists()
 def updatePhoto(user:User, file:FileStorage, **kwargs):
-    return crudReturn(userToReturn(user.updatePhoto(file)), **kwargs)
+    return crudReturn(userToReturn(user.updatePhoto(file), **kwargs))
 
 @router.route('/patients/<int:idUser>', methods=['POST', 'DELETE'])
 @requiresRole(['administrative'])
@@ -103,6 +103,7 @@ def patient(user:User, **kwargs):
 
 @router.route('/doctors/<int:idUser>', methods=['POST', 'DELETE'])
 @requiresRole(['administrative'])
+@userExists()
 def doctor(user:User, **kwargs):
     if request.method == 'POST':
         Doctor(user.id).insertOrSelect()
@@ -114,6 +115,7 @@ def doctor(user:User, **kwargs):
 
 @router.route('/administratives/<int:idUser>', methods=['POST', 'DELETE'])
 @requiresRole(['administrative'])
+@userExists()
 def administrative(user:User, **kwargs):
     if request.method == 'POST':
         Administrative(user.id).insertOrSelect()

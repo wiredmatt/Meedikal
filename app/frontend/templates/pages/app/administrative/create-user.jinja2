@@ -27,19 +27,20 @@
 
     const addSpecialty = () => {
         let value = document.getElementById('new-Specialties').value;
-        if (!specialties.includes(value)){
+        if (!specialties.includes(value) && value.trim().length > 0){
             specialties.push(value);
             document.getElementById('container-Specialties').innerHTML += generateSpecialtyChip(value);
         }
-        //clear input
+        document.getElementById('new-Phones').value = '';
     }
 
     const addPhone = () => {
         let value = document.getElementById('new-Phones').value;
-        if (!phones.includes(value)){
+        if (!phones.includes(value) && value.trim().length > 0 && parseInt(value)){
             phones.push(value);
             document.getElementById('container-Phones').innerHTML += generatePhoneChip(value);
         }
+        document.getElementById('new-Phones').value = '';
     }
 
     const deletePhone = (value) => {
@@ -58,7 +59,7 @@
             img.src = '/static/icons/add.svg';
         }
 
-        if (selectedUserRoles.includes('doctor') || selectedUserRoles.includes('medicalPersonnel')){
+        if (selectedUserRoles.includes('doctor')){
             //show specialties field    
             document.getElementById('Specialties').classList.remove('hidden');
         }else{
@@ -74,7 +75,12 @@
             toggleRole('patient');
         }
 
-        errorBox.classList.add("hidden");
+        if (!validateType(idField, 'numeric')){ return; }
+        if (!validateLength(name1Field, 3)){ return; }
+        if (!validateLength(surname1Field, 3)){ return; }
+        if (!validateLength(sexField, 1)){ return; }
+        if (!validateLength(emailField, 3)){ return; }
+        if (!validateLength(locationField, 3)){ return; }
 
         const saveUserBody = {
             id: parseInt(idField.value) || null,
@@ -100,14 +106,11 @@
             body: JSON.stringify(saveUserBody)
         });
 
-        const createdUser = await createUserRes.json();
-
-        if (createUserRes.status !== 200){
-            errorText.textContent = createdUser.extraMessage?.replace('user.', '') || createdUser.error;
-            errorBox.classList.remove("hidden");
-            toggleLoadingModal(true);
-            return;
+        if (createUserRes.status !== 200){            
+            return handleErrorResponse(createUserRes);
         }
+
+        const createdUser = await createUserRes.json();
 
         for (let role of selectedUserRoles){
             await fetch(`/api/users/${role}s/${createdUser.result.user.id}`, {
@@ -132,9 +135,9 @@
             });
         }
 
-        if (selectedUserRoles.includes(doctor)){
+        if (selectedUserRoles.includes('doctor')){
             for (let sp of specialties){
-                await fetch(`/api/users/doctors/specialties/${createdUser.result.user.id}/${specialty}`, {
+                await fetch(`/api/users/doctors/specialties/${createdUser.result.user.id}/${sp}`, {
                     method: 'POST',
                     headers: {
                         Accept: "application/json",
@@ -142,6 +145,15 @@
                     }
                 });
             }
+        }
+
+        if (userPfpField.files.length){
+            const formData = new FormData(formPfp);
+        
+            await fetch(`/api/users/updatePhoto/${createdUser.result.user.id}`, {
+                method: 'POST',
+                body: formData
+            });
         }
 
         showOkModal();

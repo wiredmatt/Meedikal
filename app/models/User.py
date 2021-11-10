@@ -4,7 +4,7 @@ from werkzeug.datastructures import FileStorage
 from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
 
-from util.errors import UpdatePasswordError
+from util.errors import UpdatePasswordError, InactiveUserError
 from dataclasses import dataclass
 from ._base import BaseModel, db
 
@@ -51,7 +51,7 @@ class User(BaseModel):
         self.surname2 = surname2
         self.genre = genre
         self.active = active
-        self.photoUrl = photoUrl
+        self.photoUrl = photoUrl or '/images/user-placeholder.png'
         
     @classmethod
     def select(cls, items: dict={}, operator:str = 'AND', shape='list', offset:int=None, limit:int=None):
@@ -117,9 +117,8 @@ class User(BaseModel):
         file.filename = secure_filename(f'{self.id}.jpg') # force jpg format
         photoUrl = os.path.join(Config.UPLOAD_FOLDER, file.filename)
 
-        with open (photoUrl, 'wb') as f:
-            f.write(file)
-
+        file.save(photoUrl)
+        
         self.update({'photoUrl': photoUrl})
 
         return self
@@ -129,6 +128,9 @@ class AuthUser:
     @classmethod
     def login(cls, id:int, password:str):
         user: User = User.select({'id': id}, shape='one')
+        if not user.active:
+            raise InactiveUserError
+
         try:
             if check_password_hash(user.password, password):
                 now = datetime.utcnow() 

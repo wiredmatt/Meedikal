@@ -11,11 +11,11 @@ def crudReturn(result=None, paginationData=None):
         for i in range(len(result)):
             if isinstance(result[i], BaseModel):
                 result[i] = asdict(result[i]) # make it json serializable
-        if len(result) < 1:
-            code = 404
+        # if len(result) < 1:
+        #     code = 404
 
-    elif result is None or result is False:
-        code = 404
+    # elif result is None or result is False:
+    #     code = 404
 
     data:dict = {"result": result}
 

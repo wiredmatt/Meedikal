@@ -36,7 +36,7 @@ def profile(id:int, currentRole:str, **kwargs):
 @appRouter.get('/profile/<int:idUser>/<string:asRole>')
 @requiresAuth
 @userExists()
-def profileById(user:User, asRole:str=None, *args, **kwargs):
+def profileById(user:User, asRole:str=None, **kwargs):
     user = userToReturn(user, **kwargs, role=asRole)
     return render_template(f'{baseDirApp}/view-profile.jinja2', user=user, asRole=asRole, readOnly=True)
 

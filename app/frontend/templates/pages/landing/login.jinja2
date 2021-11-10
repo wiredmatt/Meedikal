@@ -74,11 +74,13 @@
       },
       body: JSON.stringify(Object.fromEntries(formData.entries())),
     }).then((res) => {
-      console.log(res);
       data = res.json().then((data) => {
         if (res.ok) {
           window.location.href = "/app";
         } else {
+          if (data.error.includes('InactiveUserError')){
+            window.location.href= "/disabled-account"
+          }
           errorText.textContent = data.error;
           errorBox.classList.toggle("hidden");
         }

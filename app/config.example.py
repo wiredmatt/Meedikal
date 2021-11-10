@@ -47,7 +47,6 @@ class Config(object):
         'surname2': 'Gonzalez',
         'genre': 'Male',
         'active': 1,
-        'photoUrl': None
     }
     
     company_name = 'Healthcare Company'

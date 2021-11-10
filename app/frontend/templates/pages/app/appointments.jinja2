@@ -257,8 +257,6 @@
         if (activeFilters.appointmentName.replaceAll(/\s/g,'') === '%%'){
             delete activeFilters.appointmentName
         }
-        
-        console.log('filtering by: ', activeFilters);
 
         let res = await fetch(`/api/appointments/filter?offset=${_offset}&limit=${limit}`, {
             method: 'POST',

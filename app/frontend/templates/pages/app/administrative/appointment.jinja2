@@ -1,5 +1,6 @@
 {% from "components/app/form-field.jinja2" import formField with context %}
 {% from "components/app/users-table.jinja2" import usersTable with context %}
+{% from "components/app/error-box.jinja2" import errorBox with context %}
 {% extends 'layouts/app-base.jinja2' %}
 
 {% block title %}{{'Create' if 'create' in request.endpoint else 'Update'}} Appointment{% endblock %}
@@ -28,7 +29,7 @@
         ),
         generateCell(userId),
         generateCell(obj["user"]["sex"]),
-        generateCell(obj["user"]["birthdate"].split("T")[0]),
+        generateCell(obj["user"]["birthdate"].split(" ")[0]),
         generateActiveCell(userId, obj["user"]["active"], 'toggleActive'),
         generateSelectDoctorCell(userId, "selectDoctor"),
       ];
@@ -61,22 +62,17 @@
     {{formField("ETPP", appointment.get('etpp', ''), false, 'Automatically calculated if times provided.')}}
     {{formField("Number of Turns", appointment.get('maxTurns', ''), false, 'Automatically calculated if times provided.')}}
   </div>
-  <div id="error-box-ap-data" class="hidden">
-    <p class="text-red-500 font-semibold"></p>
-  </div>
+  {{errorBox('error-box-ap-data')}}
 
   <h1 class="pt-4 text-lg font-bold text-center w-full">Select a branch for the appointment to take place</h1>
   <div class="h-4/5 w-full overflow-y-auto pt-1">
     {% include 'components/branches.jinja2' %}
   </div>
 
-  <h1 class="pt-4 text-lg font-bold text-center w-full">Select a Doctor for the appointment</h1>
+  <h1 class="text-lg font-bold text-center w-full">Select a Doctor for the appointment</h1>
   <div class="h-4/5 w-full">{{usersTable(['doctor'], 'doctor')}}</div>
 
-  <div id="error-box" class="hidden">
-    <p class="text-red-500 font-semibold"></p>
-  </div>
-  <div class="mb-4 flex justify-between w-full space-x-10">
+  <div class="mt-4 mb-4 flex justify-between w-full space-x-10">
     <button onclick="window.location.href=window.location.href;" class="
         bg-red-500
         w-full
@@ -120,11 +116,7 @@
 </script>
 <script>
   let mode = "{{request.endpoint.rsplit('.')[2]}}" === 'createAppointment' ? 'CREATE' : 'UPDATE';
-
-  let errorBox = document.getElementById('error-box');
-  let errorText = errorBox.getElementsByTagName('p')[0];
-  let errorApDataBox = document.getElementById('error-box-ap-data');
-  let errorApDataText = errorApDataBox.getElementsByTagName('p')[0];
+  
   _searchSpContainer.classList.remove('hidden');
 
   const selectBranch = async (id) => {

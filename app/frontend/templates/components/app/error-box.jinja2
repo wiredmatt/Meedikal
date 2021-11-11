@@ -1,9 +1,9 @@
-{% macro errorBox() %}
-<div id="error-box" class="hidden">
+{% macro errorBox(_id="error-box") %}
+<div id="{{_id}}" class="hidden">
     <p class="text-red-500 font-semibold"></p>
 </div>
 <script>
-    let errorBox = document.getElementById('error-box');
+    let errorBox = document.getElementById("{{_id}}");
     let errorText = errorBox.getElementsByTagName('p')[0];
 
     const showError = (msg) => {

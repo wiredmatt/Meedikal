@@ -2,9 +2,11 @@
 {% from 'components/app/users-table.jinja2' import usersTable with context%}
 {% block title %}Users{% endblock %}
 {% block pageContent %}
-<div class="w-full h-full px-6 lg:px-10">
-  {{usersTable()}}
-  <div class="w-full flex items-center justify-center mt-4">
+<div class="w-full h-full px-6 lg:px-10 items-center justify-around flex flex-col">
+  <div class="w-full flex flex-col h-4/5">
+    {{usersTable()}}
+  </div>
+  <div class="w-full flex items-center justify-center relative">
     <button class="rounded-3xl bg-turqoise text-white font-bold w-64 h-12" onclick="window.location.href ='/app/create-user'">
       New User
     </button>

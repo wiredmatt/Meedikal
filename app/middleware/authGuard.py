@@ -13,7 +13,7 @@ def requiresAuth(f):
             pass
 
         if token is None:
-            raise MissingCookieError()
+            raise MissingCookieError
         else:
             id = int(AuthUser.verifyToken(token))
             user: User = User.select({'id': id}, shape='one')

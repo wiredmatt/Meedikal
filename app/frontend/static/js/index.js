@@ -184,7 +184,7 @@ const generateRow = (cells, rowId) => `
 
 const generateTable = (tableId, colNames, rows) => `
     <div class="border-b border-gray-200 sm:rounded-lg overflow-y-auto h-full">
-        <table class="divide-y divide-gray-200 w-full h-full" id="${tableId}">
+        <table class="divide-y divide-gray-200 w-full min-h-full" id="${tableId}">
             <thead class="bg-gray-50">
                 <tr>
                     ${colNames.map((name) => generateColumn(name)).join("\n")}

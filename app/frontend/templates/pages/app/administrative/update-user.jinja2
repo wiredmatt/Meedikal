@@ -57,7 +57,7 @@
         img = document.getElementById(`icon-${role}`);
 
         if (!user['roles'].includes(role)) { //add
-            await fetch(`/api/users/${role}/${user.user.id}`, {
+            await fetch(`/api/users/${role}s/${user.user.id}`, {
                 method: 'POST',
                 headers: {
                     Accept: "application/json",

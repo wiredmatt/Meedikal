@@ -141,7 +141,7 @@ class User(BaseModel):
 
         file.save(photoUrl)
         
-        self.update({'photoUrl': photoUrl})
+        self.update({'photoUrl': '/' + photoUrl})
 
         return self
 

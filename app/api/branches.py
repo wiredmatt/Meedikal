@@ -1,6 +1,7 @@
 from functools import wraps
 from flask import Blueprint
 from models.Branch import *
+from models.Appointment import Appointment
 from util.crud import *
 from middleware.authGuard import requiresRole, requiresAuth
 from middleware.data import passJsonData, paginated, resourceExists, validDataValues
@@ -58,8 +59,8 @@ def deleteBranch(branch:Branch, **kwargs):
 @requiresRole(['administrative'])
 @branchExists()
 @appointmentExists()
-def createApTakesPlace(data:dict, **kwargs):
-    return crudReturn(ApTakesPlace(**data).insert())
+def createApTakesPlace(appointment:Appointment, branch:Branch, **kwargs):
+    return crudReturn(ApTakesPlace(appointment.id, branch.id).insert())
 
 @router.get('/apTakesPlace/<int:idAp>')
 @requiresAuth

@@ -265,10 +265,10 @@ def updateAppointment(appointment:Appointment, **kwargs):
 
     return render_template(f'{baseDirApp}/administrative/appointment.jinja2', appointment=appointment, branches=branches, selectedBranch=selectedBranch, selectedDoctor=selectedDoctor, assignMode=True)
 
-# @appRouter.get('/stats')
-# @requiresRole(['administrative'])
-# def stats():
-#     return render_template(f'{baseDirApp}/administrative/stats.jinja2')
+@appRouter.get('/stats')
+@requiresRole(['administrative'])
+def stats():
+    return render_template(f'{baseDirApp}/administrative/stats.jinja2')
 
 @appRouter.context_processor
 @getCurrentRole

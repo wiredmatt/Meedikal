@@ -1,0 +1,181 @@
+{% extends 'layouts/app-base.jinja2' %} 
+{% block title %}Stats{% endblock %} 
+
+{% block pageContent %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<div class="w-full h-full px-6 lg:px-10 pt-4 flex flex-col space-y-4">
+    <div class="shadow-lg rounded-lg w-full h-full flex flex-col justify-center items-center">
+        <h1 class="px-5">Appointments per month this year</h1>
+        <canvas class="p-10" id="aps-per-month"></canvas>
+    </div>
+
+    <div class="shadow-lg rounded-lg w-full h-full flex flex-col justify-start items-center">
+        <h1 class="px-5">Registered symptoms</h1>
+        <div class="w-1/2 h-1/2">
+            <canvas class="p-10" id="top-symptoms"></canvas>      
+        </div>
+    </div>
+
+    <div class="shadow-lg rounded-lg w-full h-full flex flex-col justify-start items-center">
+        <h1 class="px-5">Diagnosed Diseases</h1>
+        <div class="w-1/2 h-1/2">
+            <canvas class="p-10" id="top-diseases"></canvas>      
+        </div>
+    </div>
+</div>
+<script>
+
+const randomBetween = (min, max) => min + Math.floor(Math.random() * (max - min + 1));
+const generateRandomRGB = () => {
+    const r = randomBetween(0, 255);
+    const g = randomBetween(0, 255);
+    const b = randomBetween(0, 255);
+    return `rgb(${r},${g},${b})`; // Collect all to a css color string
+}
+</script>
+<script>
+    let timeIntervals = Array(12);
+    let _data = [];
+
+    for (let i=0; i < timeIntervals.length; i++){
+        timeIntervals[i] = {
+            'from': new Date(CURRENT_YEAR, i, 1),
+            'to': new Date(CURRENT_YEAR, i, Date.prototype.getMonthDays(i))
+        }
+    }
+    
+    const initAppointmentsPerMonth = async() =>{
+
+        for (let timeInterval of timeIntervals){ 
+            let res = await fetch('/api/stats/appointmentsMade', {
+                method: 'POST',
+                headers: {
+                    Accept: "application/json",
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({timeInterval: timeInterval})
+            }) 
+
+            if (res.status === 200){
+                let _result = await res.json()
+                _data.push(_result.result)
+            }
+        }
+
+        const labels = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+        const data = {
+            labels: labels,
+            datasets: [
+            {
+                label: "n°",
+                backgroundColor: "hsl(252, 82.9%, 67.8%)",
+                borderColor: "hsl(252, 82.9%, 67.8%)",
+                data: _data,
+            },
+            ],
+        };
+
+        const configApsPerMonth = {
+            type: "line",
+            data,
+            options: {},
+        };
+
+        var apsPerMonthChart = new Chart(
+            document.getElementById("aps-per-month"),
+            configApsPerMonth
+        );
+    }
+</script>
+<script>
+    let _dataSymptoms = [];
+    let symptomNames = [];
+    const initRegisteredSymptoms = async() =>{
+        
+        let res = await fetch('/api/stats/registeredSymptoms');
+
+        if (res.status === 200){
+            let _result = await res.json();
+            symptomNames = _result.result.map(s => s.name)
+            _dataSymptoms = _result.result.map(s => s.count)
+        }
+
+        let colors = symptomNames.map(n => generateRandomRGB());
+
+        const data = {
+            labels: symptomNames,
+            datasets: [
+            {
+                label: "n°",
+                backgroundColor: Object.values(colors),
+                borderColor: "hsl(252, 82.9%, 67.8%)",
+                data: _dataSymptoms,
+            },
+            ],
+        };
+        
+        const config = {
+            type: 'doughnut',
+            data: data,
+            options: {
+                aspectRatio: 1
+            },
+        };
+
+        var symptomsChart = new Chart(
+            document.getElementById("top-symptoms"),
+            config
+        );
+    }
+</script>
+
+<script>
+    let _dataDiseases = [];
+    let diseasesNames = [];
+    const initDiagnosedDiseases = async() =>{
+        
+        let res = await fetch('/api/stats/diagnosedDiseases');
+
+        if (res.status === 200){
+            let _result = await res.json();
+            diseasesNames = _result.result.map(s => s.name)
+            _dataDiseases = _result.result.map(s => s.count)
+        }
+
+        let colors = diseasesNames.map(n => generateRandomRGB());
+
+        const data = {
+            labels: diseasesNames,
+            datasets: [
+            {
+                label: "n°",
+                backgroundColor: Object.values(colors),
+                borderColor: "hsl(252, 82.9%, 67.8%)",
+                data: _dataDiseases,
+            },
+            ],
+        };
+        
+        const config = {
+            type: 'doughnut',
+            data: data,
+            options: {
+                aspectRatio: 1
+            },
+        };
+
+        var diseasesChart = new Chart(
+            document.getElementById("top-diseases"),
+            config
+        );
+    }
+</script>
+<script>
+(async() =>{
+    await initAppointmentsPerMonth();
+    await initRegisteredSymptoms();
+    await initDiagnosedDiseases();
+})();
+
+</script>
+{% endblock %}

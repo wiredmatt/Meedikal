@@ -7,6 +7,7 @@ from api.branches import router as branchesRouter # handles /api/branch
 from api.auth import router as authRouter # handles /api/auth
 from api.sufferings import router as sufferingsRouter # handles /api/suffering
 from api.pagination import router as paginationRouter # handles /api/pagination
+from api.stats import router as statsRouter # handles /api/stats
 from frontend.router import frontendRouter
 # modular routing, instead of having all the routes in this file, I'm making multiple routers that handle each table of the database. 
 
@@ -18,6 +19,7 @@ apiRouter.register_blueprint(appointmentsRouter)
 apiRouter.register_blueprint(branchesRouter)
 apiRouter.register_blueprint(sufferingsRouter)
 apiRouter.register_blueprint(paginationRouter)
+apiRouter.register_blueprint(statsRouter)
 
 imagesRouter = Blueprint('images', __name__, url_prefix='/images') # handles /images
 @imagesRouter.get('/<resource>')

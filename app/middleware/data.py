@@ -8,7 +8,7 @@ from models import getTotal
 def passJsonData(f):
     @wraps(f)
     def decorator(*args,**kwargs):
-        data = request.get_json()
+        data = request.get_json() or {}
         return f(*args, **kwargs, data=data)
     
     return decorator

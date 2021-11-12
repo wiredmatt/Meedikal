@@ -149,7 +149,11 @@ class AuthUser:
 
     @classmethod
     def login(cls, id:int, password:str):
-        user: User = User.select({'id': id}, shape='one')
+        user: User = User.selectOne({'id': id})
+        
+        if not user:
+            return None
+        
         if not user.active:
             raise InactiveUserError
 

@@ -1,7 +1,7 @@
 export NODE_ENV="production" 
 run = MEEDIKAL_HAS_RUN_YET
 
-cd backend
+cd app
 
 if [!$run || $run -eq 0] {
     python -m venv venv # create virtual environment

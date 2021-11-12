@@ -41,6 +41,10 @@ def affiliate():
 def disabledAccount():
     return render_template('pages/landing/disabled-account.jinja2')
 
+@frontendRouter.get('/<path:path>')
+def notFound(**kwargs):
+    return render_template('404.html')
+
 @frontendRouter.context_processor
 def globalVars():
     return dict(company_name=Config.company_name, 

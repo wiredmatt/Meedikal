@@ -57,7 +57,7 @@ The file `config.py` contains the Config class, which has the fields:
 - role_colors (the colors used to differentiate users)
 - plans (name, price, popular, features and a legend)
 
-You should update said fields according to your company's information.
+You should update said fields according to your company's features.
 
 ## Running since
 

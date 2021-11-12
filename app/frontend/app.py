@@ -51,18 +51,18 @@ def appointments(**kwargs):
 @appointmentExists()
 def scheduledAppointments(appointment:Appointment, **kwargs):
     appointment = asdict(appointment)
-    assignedDoctor = userToReturn(Doctor.getDocOfAp(appointment.id), **kwargs)
-    branch = Branch.getBranchOfAp(appointment.id)
+    assignedDoctor = userToReturn(Doctor.getDocOfAp(appointment['id']), **kwargs)
+    branch = Branch.getBranchOfAp(appointment['id'])
 
     if branch:
         branch = asdict(branch)
 
-    attendingPatients = AttendsTo.selectMany({'idAp': appointment.id}) or []
+    attendingPatients = AttendsTo.selectMany({'idAp': appointment['id']}) or []
     if len(attendingPatients) > 0:
         attendingPatients = [asdict(atp) for atp in attendingPatients]
         for atp in attendingPatients:
-            atp['patient'] = userToReturn(User.select({'id': atp['idPa']}), **kwargs)
-
+            atp['patient'] = userToReturn(User.selectOne({'id': atp['idPa']}), **kwargs)
+    print(attendingPatients)
     return render_template(f'{baseDirApp}/scheduled-patients.jinja2', appointment=appointment, branch=branch, assignedDoctor=assignedDoctor, attendingPatients=attendingPatients)
 
 @appRouter.get('/appointments/patient/<int:idUser>') # show all scheduled appointments for this patient
@@ -104,7 +104,7 @@ def appointmentDetails(appointment:AttendsTo, user:User, **kwargs):
 
         for registered in registeredSymptoms:
             registered['name'] = Symptom.selectOne({'id': registered['idSy']}).name
-    
+
     registeredCs = RegistersCs.selectMany({'idPa': user.id, 'idAp': appointment['id']}) or []
     if len(registeredCs) > 0:
         registeredCs = [asdict(cs) for cs in registeredCs]
@@ -255,11 +255,11 @@ def updateAppointment(appointment:Appointment, **kwargs):
     if len(branches) > 0:
         branches = [asdict(b) for b in branches]
 
-    selectedBranch = Branch.getBranchOfAp(appointment.id) or {}
+    selectedBranch = Branch.getBranchOfAp(appointment["id"]) or {}
     if isinstance(selectedBranch, Branch):
         selectedBranch = asdict(selectedBranch)
 
-    selectedDoctor = Doctor.getDocOfAp(appointment.id) or {} 
+    selectedDoctor = Doctor.getDocOfAp(appointment["id"]) or {} 
     if isinstance(selectedDoctor, User):
         selectedDoctor = userToReturn(selectedDoctor, **kwargs, role='doctor')
 

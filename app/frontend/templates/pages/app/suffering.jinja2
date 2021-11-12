@@ -39,39 +39,29 @@
             return;
         }
 
-        if (mode === 'CREATE') {    
-            let body = {
-                name: name.value,
-                description: description.value
-            }
+        if (mode === 'CREATE') {
             res = await fetch(`/api/sufferings/${sufferingType}`, {
                 method: 'POST',
                 headers: {
                     Accept: "application/json",
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify(body)
+                body: JSON.stringify({
+                    name: name.value,
+                    description: description.value
+                })
             });
-        } else {    
-            let body = {
-                id: suffering.id,
-                name: {
-                    value: suffering.name,
-                    newValue: name.value
-                },
-                description:{
-                    value: suffering.description,
-                    newValue: description.value
-                }
-            }
-
-            res = await fetch(`/api/sufferings/${sufferingType}`, {
+        } else {
+            res = await fetch(`/api/sufferings/${sufferingType}/${suffering.id}`, {
                 method: 'PUT',
                 headers: {
                     Accept: "application/json",
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify(body)
+                body: JSON.stringify({
+                    name: name.value,
+                    description: description.value
+                })
             });
         }
 

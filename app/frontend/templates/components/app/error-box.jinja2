@@ -28,10 +28,11 @@
         field.classList.remove('border-red-200') 
     }
 
-    const validateLength = (field, length=1, msg='Invalid input.') =>{
+    const validateLength = (field, length=1, msg='Invalid input.', scroll=0) =>{
         if(field.value.trim().length < length){
             markFieldError(field);
             showError(msg + ` Must be at least ${length} characters long.`)
+            window.scrollTo(0,scroll);
             return false;
         }else{
             unmarkFieldError(field);
@@ -40,10 +41,11 @@
         }
     }
 
-    const validateType = (field, _type, msg='Invalid Input.') => {
-        if ((_type === 'numeric' && !parseInt(field.value)) || (_type === 'string' && parseInt(field.value))) {
+    const validateType = (field, _type, msg='Invalid Input.', scroll=0) => {
+        if ((_type === 'numeric' && !parseInt(field.value)) || (_type === 'string' && parseInt(field.value)) || (_type === 'date' && isNaN(new Date(field.value)))) {
             markFieldError(field);
             showError(msg + ` Must be ${_type}.`);
+            window.scrollTo(0,scroll);
             return false;
         }else{
             unmarkFieldError(field);
@@ -52,7 +54,7 @@
         }
     }
 
-    const handleErrorResponse = async(res, fields) => {
+    const handleErrorResponse = async(res) => {
         
         let error = await res.json();
         let msg;

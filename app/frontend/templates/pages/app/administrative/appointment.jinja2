@@ -44,7 +44,7 @@
 
     try {
       if (selectedDoctor.user) {
-        document.getElementById(`icon-${selectedDoctor.user.id}`).src = '/static/icons/success.svg';
+        document.getElementById(`icon-${selectedDoctor['user']['id']}`).src = '/static/icons/success.svg';
       }
     } catch { }
   }
@@ -56,11 +56,11 @@
     {{formField("ID", appointment.get('ID', ''), true)}}
     {% endif %}
     {{formField("Name", appointment.get('name', ''))}}
-    {{formField("Date", appointment.get('date', 'T').split('T')[0], false, 'YYYY-MM-DD')}}
-    {{formField("Starts At", appointment.get('startsAt', 'T:00').split('T')[1].rsplit(':',1)[0], false, 'HH:MM')}}
-    {{formField("Ends At", appointment.get('endsAt', 'T').split('T')[1].rsplit(':',1)[0], false, 'HH:MM')}}
-    {{formField("ETPP", appointment.get('etpp', ''), false, 'Automatically calculated if times provided.')}}
-    {{formField("Number of Turns", appointment.get('maxTurns', ''), false, 'Automatically calculated if times provided.')}}
+    {{formField("Date", appointment.get('date', 'T').split('T')[0], false if 'create' in request.endpoint else true, 'YYYY-MM-DD')}}
+    {{formField("Starts At", appointment.get('startsAt', 'T:00').split('T')[1].rsplit(':',1)[0], false if 'create' in request.endpoint else true, 'HH:MM')}}
+    {{formField("Ends At", appointment.get('endsAt', 'T').split('T')[1].rsplit(':',1)[0], false if 'create' in request.endpoint else true, 'HH:MM')}}
+    {{formField("ETPP", appointment.get('etpp', ''), false if 'create' in request.endpoint else true, 'Automatically calculated if times provided.')}}
+    {{formField("Number of Turns", appointment.get('maxTurns', ''), false if 'create' in request.endpoint else true, 'Automatically calculated if times provided.')}}
   </div>
   {{errorBox('error-box-ap-data')}}
 
@@ -73,24 +73,10 @@
   <div class="h-4/5 w-full">{{usersTable(['doctor'], 'doctor')}}</div>
 
   <div class="mt-4 mb-4 flex justify-between w-full space-x-10">
-    <button onclick="window.location.href=window.location.href;" class="
-        bg-red-500
-        w-full
-        font-bold
-        text-white text-center text-sm
-        rounded-full
-        py-2
-      ">
+    <button onclick="window.location.href=window.location.href;" class="bg-red-500 w-full font-bold text-white text-center text-sm rounded-full py-2">
       Cancel
     </button>
-    <button id="save" class="
-        bg-turqoise
-        w-full
-        font-bold
-        text-white text-center text-sm
-        rounded-full
-        py-2
-      ">
+    <button id="save" class="bg-turqoise w-full font-bold text-white text-center text-sm rounded-full py-2">
       Save
     </button>
   </div>
@@ -122,8 +108,8 @@
   const selectBranch = async (id) => {
     if (mode === 'UPDATE') {
       if (selectedBranch){
-        if (selectedBranch.id !== id) {
-          let res = await fetch(`/api/branches/apTakesPlace/{{appointment.id}}`, {
+        if (selectedBranch["id"] !== id) {
+          let res = await fetch(`/api/branches/apTakesPlace/{{appointment["id"]}}`, {
             method: 'PUT',
             headers: {
               Accept: "application/json",
@@ -133,18 +119,16 @@
           });
         }
       }else{
-        let res = await fetch(`/api/branches/apTakesPlace/{{appointment.id}}`, {
+        let res = await fetch(`/api/branches/apTakesPlace/{{appointment["id"]}}/${parseInt(id)}`, {
           method: 'POST',
           headers: {
             Accept: "application/json",
-            "Content-Type": "application/json",
           },
-          body: JSON.stringify({ idBranch: parseInt(id) })
         });
       }
     }
 
-    document.getElementById(`icon-${selectedBranch.id}`).src = '/static/icons/swap.svg';
+    document.getElementById(`icon-${selectedBranch["id"]}`).src = '/static/icons/swap.svg';
     document.getElementById(`icon-${id}`).src = '/static/icons/success.svg';
 
     selectedBranch = branches.find(b => b.id === parseInt(id));
@@ -154,13 +138,13 @@
     if (mode === 'UPDATE') {
       if (selectedDoctor.user) {
         if (selectedDoctor.user.id !== id) {
-          let res = await fetch(`/api/appointments/assignedTo`, {
+          let res = await fetch(`/api/appointments/assignedTo/{{appointment["id"]}}`, {
             method: 'PUT',
             headers: {
               Accept: "application/json",
               "Content-Type": "application/json",
             },
-            body: JSON.stringify({ idAp: appointment.id, idDoc: { value: selectedDoctor.user.id, newValue: id } })
+            body: JSON.stringify({ idDoc: id })
           });
         }
       } else {
@@ -170,7 +154,7 @@
             Accept: "application/json",
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ idAp: appointment.id, idDoc: { value: selectedDoctor.user.id, newValue: id } })
+          body: JSON.stringify({ idAp: appointment.id, idDoc: id })
         });
       }
     }
@@ -188,60 +172,74 @@
     let res;
 
     let name = document.getElementById('Name');
-    let state = document.getElementById('State');
+    let date = document.getElementById('Date');
+    let startsAt = document.getElementById('Starts At');
+    let endsAt = document.getElementById('Ends At');
+    let etpp = document.getElementById('ETPP');
+    let maxTurns = document.getElementById('Number of Turns');
 
     let body = {
       name: name.value,
-      date: document.getElementById('Date').value,
-      startsAt: document.getElementById('Starts At').value,
-      endsAt: document.getElementById('Ends At').value,
-      etpp: parseInt(document.getElementById('ETPP').value) || null,
-      maxTurns: parseInt(document.getElementById('Number of Turns').value) || null
+      date: date.value,
+      startsAt: startsAt.value,
+      endsAt: endsAt.value,
+      etpp: etpp.value || null,
+      maxTurns: maxTurns.value || null
     }
 
-    if (!validateLength(name, 3 ,'Provide a name for this appointment.')){
-      return;
+    if (!validateLength(name, 3 ,'Provide a name for this appointment.')) { return; }
+    if (!validateType(date, 'date', 'Invalid input (YYYY-MM-DD format expected).')){ return; }
+    if (etpp.value){
+      if (!validateType(etpp, 'numeric')){ return; }
+    }
+    if (maxTurns.value){
+      if (!validateType(maxTurns, 'numeric')){ return; }
     }
 
     let d = new Date(body.date);
 
-    if (isNaN(d)) {
-      errorApDataText.textContent = 'invalid date format';
-      errorApDataBox.classList.remove("hidden");
-      toggleLoadingModal(true);
-      window.scrollTo(0, 0);
-      return;
-    } else {
-      d.setUTCHours(0, 0, 0, 0);
-      body.date = d.toISOString();
+    d.setUTCHours(0, 0, 0, 0);
+    body.date = d.toISOString();
+
+    let start;
+    let end;
+
+    if (body.startsAt){
+        start = new Date(body.date);
+        let [startHour, startMinute] = body.startsAt.split(":");
+        start.setUTCHours(startHour, startMinute, 0, 0);
+        if (isNaN(start)) {
+          markFieldError(startsAt);
+          showError('Invalid Input (HH:MM format expected).' + ` Must be time.`);
+          window.scrollTo(0,0);
+          return false;
+        }
+        body.startsAt = start.toISOString();
+    }
+
+    if (body.endsAt){
+        end = new Date(body.date);
+        let [endHour, endMinute] = body.endsAt.split(":");
+        end.setUTCHours(endHour, endMinute, 0, 0);
+        if (isNaN(end)) {
+          markFieldError(endsAt);
+          showError('Invalid Input (HH:MM format expected).' + ` Must be time.`);
+          window.scrollTo(0,0);
+          return false;
+        }
+        body.endsAt = end.toISOString();
     }
 
     if (body.startsAt && body.endsAt) {
-      let start = new Date(body.date);
-      let end = new Date(body.date);
-
-      let [startHour, startMinute] = body.startsAt.split(":");
-      let [endHour, endMinute] = body.endsAt.split(":");
-
-      start.setUTCHours(startHour, startMinute, 0, 0);
-      end.setUTCHours(endHour, endMinute, 0, 0);
-
-      if (isNaN(start) || isNaN(end)) {
-        errorApDataText.textContent = 'invalid time format';
-        errorApDataBox.classList.remove("hidden");
-        toggleLoadingModal(true);
-        window.scrollTo(0, 0);
-        return;
-      } else {
-        body.startsAt = start.toISOString();
-        body.endsAt = end.toISOString();
-      }
-
       //difference in minutes / etpp = maxTurns
       let diffMins = Math.round(Math.abs(end - start) / 1000 / 60); //ms / 1000 = seconds / 60 = minutes
-      if (body.etpp) {
+ 
+      if (body.etpp && !body.maxTurns) {
         body.maxTurns = Math.floor(diffMins / parseInt(body.etpp));
-        document.getElementById('Number of Turns').value = body.maxTurns;
+        maxTurns.value = body.maxTurns;
+      } else if (body.maxTurns && !body.etpp){
+        body.etpp = Math.floor(diffMins / parseInt(body.maxTurns))
+        etpp.value = body.etpp;
       }
     }
 
@@ -268,10 +266,7 @@
     const savedAppointment = await res.json();
 
     if (res.status !== 200) {
-      errorText.textContent = savedAppointment.error;
-      errorBox.classList.remove("hidden");
-      toggleLoadingModal(true);
-      return;
+      return handleErrorResponse(res);
     }
 
     if (mode === 'UPDATE') {
@@ -279,21 +274,16 @@
     }
 
     if (selectedBranch) {
-      const apTakesPlaceRes = await fetch('/api/branches/apTakesPlace', {
+      await fetch(`/api/branches/apTakesPlace/${savedAppointment.result.id}/${parseInt(selectedBranch.id)}`, {
         method: 'POST',
         headers: {
           Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          idAp: savedAppointment.result.id,
-          idBranch: selectedBranch.id
-        })
+        }
       });
     }
 
     if (selectedDoctor.user) {
-      const docAssignedToRes = await fetch('/api/appointments/assignedTo', {
+      await fetch('/api/appointments/assignedTo', {
         method: 'POST',
         headers: {
           Accept: "application/json",

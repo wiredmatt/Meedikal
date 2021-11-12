@@ -67,17 +67,17 @@ def deleteAppointment(appointment:Appointment, **kwargs):
 def createAssignedTo(data:dict, **kwargs):
     return crudReturn(AssignedTo(**data).insert())
 
-@router.route('/assignedTo/<int:idAp>/<int:idDoc>', methods=['PUT', 'PATCH'])
+@router.route('/assignedTo/<int:idAp>', methods=['PUT', 'PATCH'])
 @requiresRole(['administrative'])
-@appointmentExists(AssignedTo, ['idAp', 'idDoc'], ['idAp', 'idDoc'])
+@appointmentExists(AssignedTo, ['idAp'], ['idAp'])
 @validDataValues(Doctor, ['id'], ['idDoc'])
 @passJsonData
-def updateAssignedTo(obj:AssignedTo, data:dict, **kwargs):
+def updateAssignedTo(appointment:AssignedTo, data:dict, **kwargs):
     data.pop('idAp', None)
-    return crudReturn(obj.update(data))
+    return crudReturn(appointment.update(data))
 
 @router.get('/assignedTo/<int:idAp>')
-@router.get('/assignedTo/idDoc/<int:idDoc>')
+@router.get('/assignedTo/doctor/<int:idDoc>')
 @requiresAuth
 @paginated()
 def getAssignedTo(idAp:int=None, idDoc:int=None, **kwargs): 
@@ -87,7 +87,7 @@ def getAssignedTo(idAp:int=None, idDoc:int=None, **kwargs):
         return crudReturn(AssignedTo.selectMany({'idDoc': idDoc}))
         
 @router.post('/attendsTo')
-@requiresRole(['administrative'])
+@requiresRole(['patient', 'administrative'])
 @validDataValues(Appointment, ['id'], ['idAp'])
 @validDataValues(Patient, ['id'], ['idPa'])
 @passJsonData
@@ -95,14 +95,13 @@ def createAttendsTo(data:dict, **kwargs):
     return crudReturn(AttendsTo(**data).insert())
 
 @router.route('/attendsTo/<int:idAp>/<int:idPa>', methods=['PUT', 'PATCH'])
-@requiresRole(['administrative'])
+@requiresRole(['patient', 'doctor', 'administrative'])
 @passJsonData
 @appointmentExists(AttendsTo, ['idAp', 'idPa'], ['idAp', 'idPa'])
-@passJsonData
-def updateAttendsTo(obj:AttendsTo, data:dict, **kwargs):
+def updateAttendsTo(appointment:AttendsTo, data:dict, **kwargs):
     data.pop('idAp', None)
     data.pop('idPa', None)
-    return crudReturn(obj.update(data))
+    return crudReturn(appointment.update(data))
 
 @router.get('/attendsTo/<int:idAp>')
 @router.get('/attendsTo/idPa/<int:idPa>')
@@ -115,10 +114,10 @@ def getAttendsTo(idAp:int=None, idPa:int=None, **kwargs):
         return crudReturn(AttendsTo.selectMany({'idPa': idPa}))
 
 @router.delete('/attendsTo/<int:idAp>/<int:idPa>')
-@requiresRole(['administrative'])
+@requiresRole(['administrative', 'patient'])
 @appointmentExists(AttendsTo, ['idAp', 'idPa'], ['idAp', 'idPa'])
-def deleteAttendsTo(obj:AttendsTo, **kwargs):
-    return crudReturn(obj.delete())
+def deleteAttendsTo(appointment:AttendsTo, **kwargs):
+    return crudReturn(appointment.delete())
 
 # # -- DATA INPUTTED WHEN A PATIENT IS BEING INTERVIEWED IN AN APPOINTMENT
 
@@ -133,11 +132,11 @@ def filterAps(id:int, offset:int, limit:int, currentRole:str, data:dict={}, **kw
     _typeFilter = data['typeFilter']
     _doctorSurname1 = data.get('doctorSurname1', None)
     _appointmentName = data.get('appointmentName', None)
-    _id = data.get('id', None)
+    _id = id
 
     if (currentRole == 'patient' and _typeFilter == 'mine+doctor') or currentRole != 'patient': # doctors and administrative users can see the appointments of other users, but a patient cannot see appointments of other patients (only of doctors).
-        if _id:
-            id = _id
+        if data.get('id', None) is not None:
+            _id = data.get('id')
 
     tables = ['appointment']
     conditions = []
@@ -203,8 +202,7 @@ def filterAps(id:int, offset:int, limit:int, currentRole:str, data:dict={}, **kw
         else:
             r['branch'] = {}
 
-        if _typeFilter == 'mine':
-            imAttending = AttendsTo.selectOne({'idAp': r['appointment']['id'], 'idPa': _id})
-            r['imAttending'] = isinstance(imAttending, AttendsTo) # indicates whether the patient is already scheduled for this appointment or not
+        imAttending = AttendsTo.selectOne({'idAp': r['appointment']['id'], 'idPa': _id})
+        r['imAttending'] = isinstance(imAttending, AttendsTo) # indicates whether the patient is already scheduled for this appointment or not
 
     return crudReturn(resultData, {'total': resultCount})

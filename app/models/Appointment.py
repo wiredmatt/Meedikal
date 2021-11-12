@@ -48,11 +48,11 @@ class Appointment(BaseModel):
 
     def insert(self, commit=True):
         data = asdict(self)
+
         try:
             if data.get('startsAt', None) is not None and data.get('endsAt', None) is not None:
                 startsAt = datetime.strptime(data['startsAt'], DATE_TIME_STRING_FORMAT)
                 endsAt = datetime.strptime(data['endsAt'], DATE_TIME_STRING_FORMAT)
-
                 diff = endsAt - startsAt
                 diffMins = diff.total_seconds() / 60
                 
@@ -79,7 +79,10 @@ class Appointment(BaseModel):
                 data['maxTurns'] = maxTurns
                 data['etpp'] = etpp
 
-                result = super().insert(data, commit)
+                self.maxTurns = maxTurns
+                self.etpp = etpp
+
+                result = super().insert(commit)
 
                 FreeTurns.generateTurns(maxTurns, result.id)
                 FreeTimes.generateTimes(startsAt, endsAt, etpp, result.id)
@@ -89,7 +92,7 @@ class Appointment(BaseModel):
                 raise 'no times provided'
         except Exception as exc:
                 _exc = str(exc)
-
+                
                 if 'short' in _exc:
                     data['startsAt'] = None
                     data['endsAt'] = None

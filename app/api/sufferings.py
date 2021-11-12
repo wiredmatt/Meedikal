@@ -76,27 +76,25 @@ def passSuffering(Model:BaseModel, idField:str, nameField:str='name'):
         @passJsonData
         def wrapper(data:dict, *args,**kwargs):
             if data.get(idField, None) is None:
-                _entity = Model.insertOrSelect({nameField: data[nameField]})
+                _entity = Model(name=data[nameField]).insertOrSelect(idField='name')
                 data[idField] = _entity.id
                 data.pop(nameField)
-            return f(*args, **kwargs, data=data)
+            return f(*args, **kwargs, suffering=_entity, data=data)
         
         return wrapper
     return decorator
 
 @router.post('/registersSy')
 @requiresRole(['doctor', 'administrative'])
-@passSuffering(Symptom, 'idSy')
 @validDataValues(AttendsTo, ['idAp', 'idPa'], ['idAp', 'idPa'])
-@passJsonData
-def createRegistersSy(data:dict, **kwargs):
+@passSuffering(Symptom, 'idSy')
+def createRegistersSy(data, **kwargs):
     return crudReturn(RegistersSy(**data).insert())
 
 @router.delete('/registersSy')
 @requiresRole(['doctor', 'administrative'])
-@passSuffering(RegistersSy, 'idSy')
-@validDataValues(RegistersSy, ['idAp', 'idPa', 'idSy'], ['idAp', 'idPa', 'idSy'])
-@passJsonData
+@validDataValues(RegistersSy, ['idAp', 'idPa'], ['idAp', 'idPa'])
+@passSuffering(Symptom, 'idSy')
 def deleteRegistersSy(data:dict, **kwargs):
     return crudReturn(RegistersSy.selectOne(data).delete())
 
@@ -108,17 +106,15 @@ def getRegistersSy(idAp:int, idPa:int, **kwargs):
 
 @router.post('/registersCs')
 @requiresRole(['doctor', 'administrative'])
-@passSuffering(ClinicalSign, 'idCs')
 @validDataValues(AttendsTo, ['idAp', 'idPa'], ['idAp', 'idPa'])
-@passJsonData
+@passSuffering(ClinicalSign, 'idCs')
 def createRegistersCs(data:dict, **kwargs):
     return crudReturn(RegistersCs(**data).insert())
 
 @router.delete('/registersCs')
 @requiresRole(['doctor', 'administrative'])
-@passSuffering(RegistersCs, 'idCs')
-@validDataValues(RegistersCs, ['idAp', 'idPa', 'idCs'], ['idAp', 'idPa', 'idCs'])
-@passJsonData
+@validDataValues(RegistersCs, ['idAp', 'idPa'], ['idAp', 'idPa'])
+@passSuffering(ClinicalSign, 'idCs')
 def deleteRegistersCs(data:dict, **kwargs):
     return crudReturn(RegistersCs.selectOne(data).delete())
 
@@ -130,17 +126,15 @@ def getRegistersCs(idAp:int, idPa:int, **kwargs):
 
 @router.post('/diagnoses')
 @requiresRole(['doctor', 'administrative'])
-@passSuffering(Disease, 'idDis')
 @validDataValues(AttendsTo, ['idAp', 'idPa'], ['idAp', 'idPa'])
-@passJsonData
+@passSuffering(Disease, 'idDis')
 def createDiagnoses(data:dict, **kwargs):
     return crudReturn(Diagnoses(**data).insert())
 
 @router.delete('/diagnoses')
 @requiresRole(['doctor', 'administrative'])
-@passSuffering(Diagnoses, 'idDis')
-@validDataValues(Diagnoses, ['idAp', 'idPa', 'idDis'], ['idAp', 'idPa', 'idDis'])
-@passJsonData
+@validDataValues(Diagnoses, ['idAp', 'idPa'], ['idAp', 'idPa'])
+@passSuffering(Disease, 'idDis')
 def deleteDiagnoses(data:dict, **kwargs):
     return crudReturn(Diagnoses.selectOne(data).delete())
 

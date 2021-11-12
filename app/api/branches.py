@@ -65,14 +65,14 @@ def createApTakesPlace(appointment:Appointment, branch:Branch, **kwargs):
 @router.get('/apTakesPlace/<int:idAp>')
 @requiresAuth
 @appointmentExists(ApTakesPlace)
-def getApTakesPlace(obj:ApTakesPlace, **kwargs):
-    return crudReturn(obj)
+def getApTakesPlace(appointment:ApTakesPlace, **kwargs):
+    return crudReturn(appointment)
 
 @router.route('/apTakesPlace/<int:idAp>', methods=['PUT', 'PATCH'])
 @requiresRole(['administrative'])
 @appointmentExists(ApTakesPlace)
 @validDataValues(Branch, ['id'], ['idBranch'])
 @passJsonData
-def updateApTakesPlace(obj:ApTakesPlace, data:dict, **kwargs):
+def updateApTakesPlace(appointment:ApTakesPlace, data:dict, **kwargs):
     data.pop('idAp', None)
-    return crudReturn(obj.update(data))
+    return crudReturn(appointment.update(data))

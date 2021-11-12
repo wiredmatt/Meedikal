@@ -6,7 +6,7 @@ p = os.path.join(os.path.dirname(__file__))
 from models.User import User
 
 data = {
-        'id': 1,
+        'id': 10000000,
         'name1': 'Juan',
         'surname1': 'Perez',
         'sex': 'M',

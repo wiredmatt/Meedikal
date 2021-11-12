@@ -12,6 +12,19 @@ const CURRENT_DAY = TODAY.getDate();
 
 const CURRENT_WEEKDAY = TODAY.getDay();
 
+const currentTimeWithoutTZ = () => {
+  let now = new Date(Date.now());
+  let __today = TODAY;
+  let __now = new Date(__today.setUTCHours(now.getHours(), now.getMinutes(), 0, 0));
+  return __now;
+};
+
+const currentDayWithoutTZ = () => {
+  let __today = TODAY;
+  let __now = new Date(__today.setUTCHours(0, 0, 0, 0));
+  return __now;
+};
+
 Date.locale = {
   en: {
     monthNames: [
@@ -286,7 +299,7 @@ const generateSymptomChip = (value) => `
         <span class="px-1 w-full leading-none text-white text-center text-white font-bold">
             ${value}
         </span>
-        <button onclick="deleteSymptom(${value})" class="h-5 w-5 rounded-full bg-opacity-25 focus:outline-none">
+        <button onclick="deleteSymptom('${value}')" class="h-5 w-5 rounded-full bg-opacity-25 focus:outline-none">
             <img src="/static/icons/delete.svg" width="16" height="16" />
         </button>
     </div>
@@ -297,7 +310,7 @@ const generateCsChip = (value) => `
         <span class="px-1 w-full leading-none text-white text-center text-white font-bold">
             ${value}
         </span>
-        <button onclick="deleteClinicalSign(${value})" class="h-5 w-5 rounded-full bg-opacity-25 focus:outline-none">
+        <button onclick="deleteClinicalSign('${value}')" class="h-5 w-5 rounded-full bg-opacity-25 focus:outline-none">
             <img src="/static/icons/delete.svg" width="16" height="16" />
         </button>
     </div>
@@ -308,13 +321,13 @@ const generateDiseaseChip = (value) => `
         <span class="px-1 w-full leading-none text-white text-center text-white font-bold">
             ${value}
         </span>
-        <button onclick="deleteDisease(${value})" class="h-5 w-5 rounded-full bg-opacity-25 focus:outline-none">
+        <button onclick="deleteDisease('${value}')" class="h-5 w-5 rounded-full bg-opacity-25 focus:outline-none">
             <img src="/static/icons/delete.svg" width="16" height="16" />
         </button>
     </div>
     `;
 
-const generateConfirmationModal = (id, fn, title='Confirm action', body='Changes will remain permanent, proceed?') => `
+const generateConfirmationModal = (id, fn, title='Confirm action', body='Changes will be permanent, proceed?') => `
 <div id="modal-${id}" class="fixed z-50 inset-0 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
   <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
     <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>

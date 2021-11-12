@@ -26,6 +26,10 @@ This project was done as the last activity of the educational program [Sembrando
 
 Some documentation might be in spanish but not yet translated to english or vice-versa, when the development is completed it will get fully translated to both languages. The project is not yet completed but the estimated date for it to be finished is early december.
 
+## Disclaimer
+
+This is only a personal project, by no means its use is recommended in a production environment, due to the technologies used the code maintenance is not something I'm proud of either. A complete version of this project will start its development soon, with proper technologies that'll make Meedikal what it was intended to be. It's worth mentioning that some features couldn't be implemented due to the limitation of the technologies used (analysis, treatments and medication related features are not available in this version).
+
 ## Run it
 
 ### Windows

@@ -1,0 +1,31 @@
+{% macro appointmentDetails(appointment, branch, doctor) %}
+<div id='ap-{{appointment.id}}' class="rounded-2xl border border-turqoise flex flex-col justify-center items-center h-full w-full self-center pt-2 relative">
+    <div class="relative flex flex-row justify-center items-center space-x-4 h-full w-full px-1">
+        <a href='/app/profile/{{doctor.get("user", {}).get("id", "")}}' class="pt-2 flex flex-col items-center justify-center space-y-1 h-full w-1/2">
+            <img src="{{url_for('images.returnResource', resource=doctor.get('user', {}).get('photoUrl', '').replace('images/', ''))}}" class="rounded-full border border-turqoise h-full" />
+            <h3>{{doctor.get('user', {}).get('name1', '') + " " + doctor.get('user', {}).get('surname1', '')}}</h3>
+        </a>
+        <div class="w-flex flex-col w-full h-full lg:pr-4 items-center justify-center">
+            <div class="h-full grid grid-cols-2 grid-rows-4 w-full items-center justify-center">
+                <span class="text-turqoise font-bold w-full">Name:</span>
+                <span class="w-full">{{appointment['name']}}</span>
+                <span class="text-turqoise font-bold w-full">Date:</span>
+                <span class="w-full">{{appointment['date'].split('T')[0]}}</span>
+                <span class="text-turqoise font-bold w-full">Schedule:</span>
+                <span class="w-full">{{appointment['startsAt'].split('T')[1].rsplit(":", 1)[0]}} - {{appointment['endsAt'].split('T')[1].rsplit(":", 1)[0]}}</span>
+                <span class="text-turqoise font-bold w-full">Location:</span>
+                <div>
+                    <div class="has-tooltip w-full h-full flex flex-row relative">
+                        <a class="hover:text-turqoise" href='/app/branches#{{branch.id}}'>
+                            {{branch.get('name', '')}}
+                        </a>
+                        <span class="tooltip rounded shadow-lg p-1 bg-gray-500 text-white font-bold top-2 mt-4">
+                            {{branch.get('location', '')}}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endmacro %}

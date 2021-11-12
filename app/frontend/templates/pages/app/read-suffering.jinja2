@@ -1,0 +1,11 @@
+{% extends 'layouts/app-base.jinja2' %}
+{% block title %}{{sufferingType.capitalize()}} {{suffering['name'].capitalize()}}{% endblock %}
+
+{% block pageContent %}
+<div class="w-full h-full px-6 lg:px-10 pt-4">
+    <h1 class="text-2xl font-bold text-center w-full">{{suffering['name'].capitalize()}}</h1>
+    <div class="h-5/6 border-2">
+        <textarea readonly class="focus:outline-none text-center resize-none w-full h-full">{{suffering['description'] or '-'}}</textarea>
+    </div>
+</div>
+{% endblock %}

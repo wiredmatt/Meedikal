@@ -1,0 +1,43 @@
+{% from "components/app/chip.jinja2" import chip, chipAction with context %} 
+
+{% macro formField(name, value, readOnly, placeholder='') %}
+<div class="flex w-full">
+  <span class="text-sm border bg-blue-50 font-bold uppercase border-2 px-4 py-2 bg-gray-50 whitespace-no-wrap w-2/6">
+    {{name}}
+  </span>
+  <input class="px-4 border-l-1 focus:outline-none focus:ring-1 ring-turqoise rounded-md shadow-sm w-4/6" {% if readOnly %} readonly {% endif %} placeholder="{{placeholder}}" type="text" value='{{value}}' id='{{name}}'/>
+</div>
+{% endmacro %}
+
+{% macro formFieldChips(name, values, displayAttr, fn, icon='icons/delete.svg', canAdd=false, addFn='', addOnly=false) %}
+<div class="flex h-full">
+  {% if not addOnly %}
+  <span class="text-sm border bg-blue-50 font-bold uppercase border-2 rounded-l px-4 py-2 bg-gray-50 whitespace-no-wrap w-2/6">
+    {{name}}
+  </span>
+  {% endif %}
+  <div class="flex flex-wrap items-center justify-center md:justify-start px-4 gap-1 w-4/6 h-full">
+    <div class="flex flex-wrap" id="container-{{name}}">
+      {% if canAdd %}
+        {% for v in values %} 
+          {{chip(v[displayAttr], "white", True, 'bg-turqoise', chipAction(v[displayAttr], fn, icon))}}
+        {% endfor %}
+      {% else %}
+        {% for v in values %} 
+          {{chip(v[displayAttr], "white", True, 'bg-turqoise')}}
+        {% endfor %}
+      {% endif %}
+    </div>
+    {% if canAdd is true %}
+    <div class="inline-flex items-center rounded-full border border-gray-200 px-1 py-2 h-8">
+      <div>
+        <input id='new-{{name}}' type="text" class="px-1 w-full text-black text-center focus:outline-none" value=""/> 
+      </div>
+      <button onclick="{{addFn}}()" class="h-5 w-5 rounded-full bg-opacity-25 focus:outline-none">
+        <img src="{{url_for('static', filename='icons/add.svg')}}" width="16" height="16" class="-mx-1"/>
+      </button>
+    </div>  
+    {% endif %}
+  </div>
+</div>
+{% endmacro %}

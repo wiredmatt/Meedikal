@@ -1,0 +1,78 @@
+{% from "components/app/form-field.jinja2" import formField with context %}
+{% from "components/app/error-box.jinja2" import errorBox with context %}
+
+{% extends 'layouts/app-base.jinja2' %}
+{% block title %}{{'Create' if 'create' in request.endpoint else 'Update'}} {{sufferingType}}{% endblock %}
+
+{% block pageContent %}
+<div class="w-full px-6 lg:px-10 pt-4">
+    <div class="shadow-xl p-4 space-y-2" id="suffering-fields">
+        {% if suffering.get('ID', none) is not none %}
+        {{formField("ID", suffering.get('ID', ''), true)}}
+        {% endif %}
+        {{formField("Name", suffering.get('name', ''))}}
+        {{formField("Description", suffering.get('description', ''))}}
+    </div>
+    {{errorBox()}}
+    <div class="mb-4 mt-4 flex justify-between w-full space-x-10">
+        <button onclick="window.location.href=window.location.href;" class="bg-red-500 w-full font-bold text-white text-center text-sm rounded-full py-2">
+            Cancel
+        </button>
+        <button id="save" class="bg-turqoise w-full font-bold text-white text-center text-sm rounded-full py-2">
+            Save
+        </button>
+    </div>
+</div>
+<script>
+    let suffering = {{suffering | tojson | safe}};
+    let sufferingType = "{{sufferingType}}";
+    let mode = "{{request.endpoint.rsplit('.')[2]}}".includes('create') ? 'CREATE' : 'UPDATE';
+
+    document.getElementById('save').addEventListener('click', async () => {
+        toggleLoadingModal();
+
+        let res;
+        let name = document.getElementById('Name');
+        let description = document.getElementById('Description');
+
+        if (!validateLength(name, 3 ,`Provide a name for this ${sufferingType}.`)){
+            return;
+        }
+
+        if (mode === 'CREATE') {
+            res = await fetch(`/api/sufferings/${sufferingType}`, {
+                method: 'POST',
+                headers: {
+                    Accept: "application/json",
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    name: name.value,
+                    description: description.value
+                })
+            });
+        } else {
+            res = await fetch(`/api/sufferings/${sufferingType}/${suffering.id}`, {
+                method: 'PUT',
+                headers: {
+                    Accept: "application/json",
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    name: name.value,
+                    description: description.value
+                })
+            });
+        }
+
+        const savedsuffering = await res.json();
+
+        if (res.status !== 200) {
+            showError(savedsuffering.error);
+            return;
+        } else {
+            showOkModal();
+        }
+    })
+</script>
+{% endblock %}

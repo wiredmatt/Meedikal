@@ -1,0 +1,50 @@
+{% macro patientCard(patient, attendsTo, attend, doctor) %}
+<div id='ap-{{attendsTo["idAp"]}}' class="rounded-2xl border border-turqoise flex flex-col justify-center items-center h-full w-full self-center pt-2 relative">
+    <div class="relative flex flex-row justify-center items-center space-x-4 h-full w-full px-1">
+        <a href='/app/profile/{{patient.get("user", {}).get("id", "")}}' class="pt-2 flex flex-col items-center justify-center space-y-1 h-full w-1/2">
+            <img src="{{url_for('images.returnResource', resource=patient.get('user', {}).get('photoUrl', '').replace('images/', ''))}}" class="rounded-full border border-turqoise h-full" />
+            <h3>{{patient.get('user', {}).get('name1', '') + " " + patient.get('user', {}).get('surname1', '')}}</h3>
+        </a>
+        <div class="relative flex flex-col w-full h-full lg:pr-4 items-center justify-center">
+            <div class="relative h-full grid grid-cols-2 grid-rows-4 w-full items-center justify-center">
+                <span class="text-turqoise font-bold w-full">Motive:</span>
+                <textarea id="motive" rows="2" class="w-full border border-turqoise h-12" style="resize: none;">{{attendsTo['motive'] or '-'}}</textarea>
+                <span class="text-turqoise font-bold w-full pt-2">Time:</span>
+                <span class="w-full pt-2">{{attendsTo['time'].split('T')[1].rsplit(":", 1)[0]}}</span>
+                <span class="text-turqoise font-bold w-full">Turn:</span>
+                <span class="w-full">{{attendsTo['number']}}</span>
+            </div>
+        </div>
+        {% if me['user']['id'] == doctor['user']['id'] or patient['user']['id'] == me['user']['id'] %}
+        <button class="absolute right-4 bottom-2" onclick="updateMotive('{{patient.user.id}}', '{{attendsTo.idAp}}')">
+            <img width="24" height="24" src="{{url_for('static', filename='icons/save.svg')}}"/>
+        </button>
+        {% endif %}
+    </div>
+    {% if attend %}
+            <a href="/app/appointment/{{attendsTo['idAp']}}/{{patient['user']['id']}}">
+                <button class="absolute bottom-2 rounded-3xl bg-turqoise text-white font-bold w-64 h-12" onclick="window.location.href ='/app/create-branch'">
+                    {{'Attend Patient' if me['user']['id'] == doctor['user']['id'] else 'View Details'}}
+                </button>
+            </a>
+    {% endif %}
+</div>
+<script>
+    const updateMotive = async(idPa, idAp) =>{
+        motive = document.getElementById('motive').value
+
+        await fetch(`/api/appointments/attendsTo/${idAp}/${idPa}`, {
+            method: 'PUT',
+            headers: {
+                Accept: "application/json",
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                motive: motive
+            })
+        });
+
+        showOkModal();
+    }
+</script>
+{% endmacro %}

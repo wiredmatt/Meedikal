@@ -1,0 +1,25 @@
+{% extends "layouts/landing-base.jinja2" %}
+{% block title %}Page not Found{% endblock %}
+
+{% block pageContent %}
+<div class="flex w-full font-overpass flex-col">
+  <div class="lg:pt-4 flex w-full">
+    <div class="flex flex-col w-full">
+      <div class="lg:px-8 flex flex-col pt-8 md:pt-0 px-6 lg:pl-16 lg:h-full lg:justify-around">
+        <div>
+          <p class="text-2xl font-bold">404 Page Not Found</p>
+          <p class="text-2xs">
+            This page doesn't exist or it was removed.
+            <a href="/" class="text-turqoise font-bold pl-1">
+              Back to Homepage
+            </a>
+          </p>
+        </div>
+      </div>
+    </div>
+    <div class="hidden lg:flex lg:my-auto lg:display-flex lg:mb-4">
+      <img src="{{url_for('static', filename='images/healthcare-graphic.png')}}" alt="hospital illustration" />
+    </div>
+  </div>
+</div>
+{% endblock %}

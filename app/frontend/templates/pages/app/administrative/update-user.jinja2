@@ -1,0 +1,217 @@
+{% extends 'layouts/app-base.jinja2' %} {% from "components/app/profile.jinja2" import profile with context %}
+
+{% block title %}Update User{% endblock %}
+{%block pageContent %}
+{{profile(user, 'update', 'toggleRole', 'icons/remove.svg', 'updateUser')}}
+
+<script type="text/javascript">
+    let user = JSON.parse('{{user|tojson}}');
+    let roleColors = JSON.parse('{{roleColors|tojson}}');
+
+    let availableRoles = ["patient", "administrative", "doctor"];
+
+    let rolesContainer = document.getElementById("roles");
+    let phonesContainer = document.getElementById('container-Phones');
+     
+    availableRoles.forEach((r) => {
+        if (!user['roles'].includes(r)) {
+            rolesContainer.innerHTML += generateRoleChip(r, roleColors[r]);
+        }
+    });
+
+    let formFields = document.getElementById("user-fields");
+    //workaround to mysterious bug that broke every other input value if trying to do formFields.innerHTML += generateSpecialtiesField('');
+    let specialtiesContainer = document.createElement("div");
+    specialtiesContainer.id = "Specialties";
+    specialtiesContainer.classList.add("hidden");
+
+    (async function () {
+        if (user.roles.includes('doctor')) {
+            let chips = "";
+
+            if (!user.specialties) {
+                let res = await fetch(`/api/users/doctors/specialties/${user.user.id}`, {
+                    headers: {
+                        Accept: "application/json",
+                    },
+                })
+                
+                user.specialties = (await res.json()).result.map(sp => sp.title) || [];
+            }
+
+            for (let sp of user.specialties) {
+                chips += generateSpecialtyChip(sp);
+            }
+
+            specialtiesContainer.innerHTML += generateSpecialtiesField(chips);
+            specialtiesContainer.classList.remove("hidden");
+        } else {
+            specialtiesContainer.innerHTML += generateSpecialtiesField("");
+        }
+    })();
+
+    formFields.appendChild(specialtiesContainer);
+
+    const toggleRole = async (role) => {
+        toggleLoadingModal();
+        img = document.getElementById(`icon-${role}`);
+
+        if (!user['roles'].includes(role)) { //add
+            await fetch(`/api/users/${role}s/${user.user.id}`, {
+                method: 'POST',
+                headers: {
+                    Accept: "application/json",
+                }
+            });
+            user['roles'].push(role);
+            img.src = '/static/icons/remove.svg';
+        } else { //remove
+            await fetch(`/api/users/${role}/${user.user.id}`, {
+                method: 'DELETE',
+                headers: {
+                    Accept: "application/json",
+                }
+            });
+            user['roles'] = user['roles'].filter(r => r !== role);
+            img.src = '/static/icons/add.svg';
+        }
+
+        if (user['roles'].includes('doctor')) {
+            document.getElementById('Specialties').classList.remove('hidden');
+        } else {
+            document.getElementById('Specialties').classList.add('hidden');
+        }
+
+        toggleLoadingModal();
+    }
+
+    const updateUser = async() => {
+        toggleLoadingModal();
+        
+        if (user.roles.length < 1){
+            toggleRole('patient');
+        }
+        
+        let res = await fetch(`/api/users/${user.user.id}`, {
+            method: "PUT",
+            headers: {
+                Accept: "application/json",
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                name1: name1Field.value,
+                name2: name2Field.value,
+                surname1: surname1Field.value,
+                surname2: surname2Field.value,
+                sex: sexField.value,
+                genre: genreField.value,
+                birthdate: birthdateField.value,
+                email: emailField.value,
+                location: locationField.value,
+            }),
+        })
+        
+        let data = await res.json();
+
+        if (res.status === 200) {
+            if (document.getElementById('file-input').files.length){
+                const formData = new FormData(document.getElementById('pfp-form'));
+            
+                await fetch(`/api/users/updatePhoto/${user.user.id}`, {
+                    method: 'PUT',
+                    body: formData
+                });
+            }
+            errorBox.classList.add("hidden");
+            showOkModal();
+        }else{
+            errorText.textContent = data.extraMessage || data.error;
+            errorBox.classList.remove("hidden");
+            toggleLoadingModal();
+        }
+    };
+
+    const deletePhone = async(phone) => {
+        toggleLoadingModal();
+        await fetch(`/api/users/phoneNumbers/${user.user.id}`, {
+            method: "DELETE",
+            headers: {
+                Accept: "application/json",
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                id: user.user.id,
+                phone: phone,
+            })
+        })
+
+        user.phoneNumbers = user.phoneNumbers.filter(p => p !== phone);
+        document.getElementById(phone).remove();
+        toggleLoadingModal();
+    }
+
+    const addPhone = async() => {
+        toggleLoadingModal();
+        let phone = document.getElementById('new-Phones').value;
+
+        if (!user.phoneNumbers.includes(phone) && phone.trim().length > 0 && parseInt(phone)){
+            await fetch(`/api/users/phoneNumbers/${user.user.id}`, {
+                method: "POST",
+                headers: {
+                    Accept: "application/json",
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    id: user.user.id,
+                    phone: phone,
+                }),
+            })
+
+            user.phoneNumbers.push(phone);
+            phonesContainer.innerHTML += generatePhoneChip(phone);
+        }
+
+        document.getElementById('new-Phones').value = '';
+        toggleLoadingModal();
+    }
+
+    const addSpecialty = async () => {
+        toggleLoadingModal();
+        let specialty = document.getElementById('new-Specialties').value;
+        if (!user.specialties) {
+            user.specialties = [];
+        }
+
+        if (!user.specialties.includes(specialty) && specialty.trim().length > 0) {  
+            await fetch(`/api/users/doctors/specialties/${user.user.id}/${specialty}`, {
+                method: 'POST',
+                headers: {
+                    Accept: "application/json"
+                }
+            });
+
+            user.specialties.push(specialty);
+            document.getElementById('container-Specialties').innerHTML += generateSpecialtyChip(specialty);
+        }
+
+        document.getElementById('new-Specialties').value = '';
+        toggleLoadingModal();
+    }
+
+    const deleteSpecialty = async (sp) => {
+        toggleLoadingModal();
+        user['specialties'] = user['specialties'].filter(s => s !== sp);
+
+        await fetch(`/api/users/doctors/specialties/${user.user.id}/${sp}`, {
+            method: 'DELETE',
+            headers: {
+                Accept: "application/json"
+            }
+        });
+
+        document.getElementById(sp).remove();
+        toggleLoadingModal();
+    }
+
+</script>
+{% endblock %}

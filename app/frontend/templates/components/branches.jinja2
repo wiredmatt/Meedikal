@@ -1,0 +1,37 @@
+<div class="h-auto w-full flex flex-col items-center justify-start py-2 px-2 gap-2 overflow-y-auto">
+    {% for branch in branches %}
+    <div id="{{branch.id}}" class="flex flex-row flex-wrap space-x-1 w-full md:justify-center md:items-center border border-turqoise {{ 'border-green-200 border-2' if selectedBranch.id == branch.id else ''}} rounded-xl py-2 px-2 self-start">
+        <div class="flex flex-col w-full items-center justify-center">
+            <div class="h-full grid grid-cols-2 grid-rows-3">
+                <span class="text-turqoise font-bold">Name:</span>
+                <span>{{branch.name}}</span>
+                <span class="text-turqoise font-bold">Phone:</span>
+                <span>{{branch.phoneNumber}}</span>
+                <span class="text-turqoise font-bold">Location:</span>
+                <span>{{branch.location}}</span>
+            </div>
+            {% if assignMode %}
+            <div class="flex self-end mb-2 md:mb-0 space-x-1">
+                <button onclick="selectBranch({{branch.id}})" class="self-end md:self-start hover:bg-gray-200">
+                    <img id='icon-{{branch.id}}' src="{{url_for('static', filename='icons/success.svg') if selectedBranch.get('id', -1) == branch.id else url_for('static', filename='icons/swap.svg')}}" width="16" />
+                </button>
+            </div>
+            {% else %}
+                {% if myRole == 'administrative' %}
+                <div class="flex self-end mb-2 md:mb-0 space-x-1">
+                    <a class="self-end md:self-start hover:bg-gray-200" href="/app/update-branch/{{branch.id}}">
+                        <img src="{{url_for('static', filename='icons/edit.svg')}}" width="16" />
+                    </a>
+                    <button onclick="deleteBranchConfirm('{{branch.id}}')" class="self-end md:self-start hover:bg-gray-200">
+                        <img src="{{url_for('static', filename='icons/delete.svg')}}" width="16" />
+                    </button>
+                </div>
+                {% endif %}
+            {% endif %}
+            {% if branch.googleMapsSrc %}
+            <iframe class="border-2 border-turqoise w-full mt-2" src="{{branch.googleMapsSrc}}" frameborder="0" allowfullscreen="" loading="eager" height="200" width="200"></iframe>      
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>

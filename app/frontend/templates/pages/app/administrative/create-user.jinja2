@@ -1,0 +1,163 @@
+{% extends 'layouts/app-base.jinja2' %} 
+{% from "components/app/profile.jinja2" import profile with context %} 
+
+{% block title %}Create User{% endblock %} 
+
+{% block pageContent %}
+{{profile({'roles': ['patient', 'administrative', 'doctor']}, 'create', 'toggleRole', 'icons/add.svg', 'saveUser')}}
+
+<script type="text/javascript">
+
+    let formFields = document.getElementById('user-fields'); 
+    //workaround to mysterious bug that broke every other input value if trying to do formFields.innerHTML += generateSpecialtiesField(''); 
+    let specialtiesContainer = document.createElement('div');
+    specialtiesContainer.id = 'Specialties';
+    specialtiesContainer.classList.add('hidden');
+    specialtiesContainer.innerHTML += generateSpecialtiesField('');
+    formFields.appendChild(specialtiesContainer); 
+    
+    let selectedUserRoles = [];    
+    let phones = [];
+    let specialties = [];
+    
+    const deleteSpecialty = (value) => {
+        specialties = specialties.find(el => el !== value);
+        document.getElementById(value).remove();
+    }
+
+    const addSpecialty = () => {
+        let value = document.getElementById('new-Specialties').value;
+        if (!specialties.includes(value) && value.trim().length > 0){
+            specialties.push(value);
+            document.getElementById('container-Specialties').innerHTML += generateSpecialtyChip(value);
+        }
+        document.getElementById('new-Phones').value = '';
+    }
+
+    const addPhone = () => {
+        let value = document.getElementById('new-Phones').value;
+        if (!phones.includes(value) && value.trim().length > 0 && parseInt(value)){
+            phones.push(value);
+            document.getElementById('container-Phones').innerHTML += generatePhoneChip(value);
+        }
+        document.getElementById('new-Phones').value = '';
+    }
+
+    const deletePhone = (value) => {
+        phones = phones.find(el => el !== value);
+        document.getElementById(value).remove();
+    }
+
+    const toggleRole = (role) => {
+        img = document.getElementById(`icon-${role}`);
+        
+        if (!selectedUserRoles.includes(role)){
+            selectedUserRoles.push(role);
+            img.src = '/static/icons/remove.svg';
+        }else{
+            selectedUserRoles = selectedUserRoles.filter(r => r !== role);
+            img.src = '/static/icons/add.svg';
+        }
+
+        if (selectedUserRoles.includes('doctor')){
+            //show specialties field    
+            document.getElementById('Specialties').classList.remove('hidden');
+        }else{
+            document.getElementById('Specialties').classList.add('hidden');
+        }
+
+    }
+
+    const saveUser = async() => {
+        toggleLoadingModal();
+        
+        if (selectedUserRoles.length < 1){
+            toggleRole('patient');
+        }
+
+        if (!validateType(idField, 'numeric')){ return; }
+        if (!validateLength(name1Field, 3)){ return; }
+        if (!validateLength(surname1Field, 3)){ return; }
+        if (!validateLength(sexField, 1)){ return; }
+        if (!validateLength(emailField, 3)){ return; }
+        if (!validateLength(locationField, 3)){ return; }
+
+        const saveUserBody = {
+            id: parseInt(idField.value) || null,
+            name1: name1Field.value || null,
+            name2: name2Field.value || null,
+            surname1: surname1Field.value || null,
+            surname2: surname2Field.value || null,
+            sex: sexField.value || null,
+            genre: genreField.value || null,
+            birthdate: birthdateField.value || null,
+            email: emailField.value || null,
+            location: locationField.value || null,
+            active: activeField.value === "active" ? true : false,
+            password: idField.value || null
+        }
+
+        const createUserRes = await fetch('/api/users', {
+            method: 'POST',
+            headers: {
+                Accept: "application/json",
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(saveUserBody)
+        });
+
+        if (createUserRes.status !== 200){            
+            return handleErrorResponse(createUserRes);
+        }
+
+        const createdUser = await createUserRes.json();
+
+        for (let role of selectedUserRoles){
+            await fetch(`/api/users/${role}s/${createdUser.result.user.id}`, {
+                method: 'POST',
+                headers: {
+                    Accept: "application/json"
+                }
+            });
+        }
+
+        for (let phone of phones){
+            await fetch(`/api/users/phoneNumbers/${createdUser.result.user.id}`, {
+                method: 'POST',
+                headers: {
+                    Accept: "application/json",
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    id: createdUser.result.user.id,
+                    phone: phone
+                })
+            });
+        }
+
+        if (selectedUserRoles.includes('doctor')){
+            for (let sp of specialties){
+                await fetch(`/api/users/doctors/specialties/${createdUser.result.user.id}/${sp}`, {
+                    method: 'POST',
+                    headers: {
+                        Accept: "application/json",
+                        "Content-Type": "application/json",
+                    }
+                });
+            }
+        }
+
+        if (userPfpField.files.length){
+            const formData = new FormData(formPfp);
+        
+            await fetch(`/api/users/updatePhoto/${createdUser.result.user.id}`, {
+                method: 'POST',
+                body: formData
+            });
+        }
+
+        showOkModal();
+    }
+
+</script>
+{% endblock %}

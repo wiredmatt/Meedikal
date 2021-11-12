@@ -1,0 +1,123 @@
+{% extends 'layouts/app-base.jinja2' %}
+{% from 'components/app/users-table.jinja2' import usersTable with context%}
+{% block title %}Users{% endblock %}
+{% block pageContent %}
+<div class="w-full h-full px-6 lg:px-10 items-center justify-around flex flex-col">
+  <div class="w-full flex flex-col h-4/5">
+    {{usersTable()}}
+  </div>
+  <div class="w-full flex items-center justify-center relative">
+    <button class="rounded-3xl bg-turqoise text-white font-bold w-64 h-12" onclick="window.location.href ='/app/create-user'">
+      New User
+    </button>
+  </div>
+</div>
+<script>
+  const drawTable = (_data) => {
+    let rows = Array(_data.length);
+    for (let obj of _data) {
+      let userId = obj["user"]["id"];
+
+      let cells = [
+        nameCell(
+          `<a class="hover:text-turqoise" href="/app/profile/${userId}${selectedRole ? `/${selectedRole}` : ''}">${obj["user"]["name1"]} ${obj["user"]["surname1"]}</a>`,
+          obj["user"]["photoUrl"]
+        ),
+        generateCell(userId),
+        generateCell(obj["user"]["sex"]),
+        generateCell(obj["user"]["birthdate"].split(" ")[0]),
+      ];
+
+      if (me.user.id !== userId){
+        cells.push(generateActiveCell(userId, obj["user"]["active"], 'toggleActive'));
+        cells.push(generateActionsCell(userId, "User"));
+      }else{
+        cells.push(generateActiveCell(userId, obj["user"]["active"], ''));
+      }
+
+      rows.push(generateRow(cells, userId));
+    }
+
+    tableContainer.innerHTML = generateTable(
+      "users-table",
+      ["Name", "ID", "Sex", "Birthdate", "Status", "Actions"],
+      rows
+    );
+  }
+</script>
+<script type="text/javascript">
+
+  tableContainer.innerHTML = generateTable(
+    "users-table",
+    ["Name", "ID", "Sex", "Birthdate", "Status", "Actions"],
+    []
+  );
+
+  const toggleActive = async (userId) => {
+
+    const activeField = document.getElementById(`active-${userId}`);
+    activeField.classList.remove("bg-red-100");
+    activeField.classList.remove("bg-green-100");
+
+    const active = activeField.textContent.trim() === "Active" ? 0 : 1;
+    const res = await fetch(`/api/users/${userId}`, {
+      method: "PUT",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        active: active
+      })
+    });
+
+    activeField.textContent = active ? "Active" : "Inactive";
+    activeField.classList.toggle(active ? "bg-green-100" : "bg-red-100");
+  };
+
+  const updateUser = (id) => {
+    window.location.href = `/app/update-user/${id}`;
+  }
+
+  const deleteUserConfirm = (id) => {
+    let _wrapper = document.createElement('div');
+    _wrapper.id = `wrapper-${id}`;
+    _wrapper.innerHTML = generateConfirmationModal(id, 'deleteUser');
+    document.body.appendChild(_wrapper);
+  }
+
+  const deleteUser = async (id, mode='confirm') => {
+    if (mode === 'confirm'){
+        await fetch(`/api/users/${id}`, {
+            method: "DELETE",
+            headers: {
+              Accept: "application/json",
+              "Content-Type": "application/json",
+            }
+        })
+        await loadUsers(offset);
+        await setPagination(
+          "user",
+          offset,
+          limit,
+          paginationContainer,
+          "loadUsers"
+        );
+    }
+
+    document.getElementById(`wrapper-${id}`).remove();
+  }
+
+  (async function () {
+    await loadUsers(offset);
+    await setPagination(
+      "user",
+      offset,
+      limit,
+      paginationContainer,
+      "loadUsers",
+      {}
+    );
+  })();
+</script>
+{% endblock pageContent %}

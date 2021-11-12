@@ -1,8 +1,0 @@
-{% from "components/app/profile.html" import profile with context %} 
-{% extends 'layouts/app-base.html' %} 
-
-{% block title %}Profile{% endblock %}
-
-{% block pageContent %}
-{{profile(user, asRole)}}
-{% endblock %}

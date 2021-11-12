@@ -1,0 +1,17 @@
+{% extends 'layouts/app-base.jinja2' %} 
+{% block title %}Home{% endblock %}
+
+{%block pageContent %}
+<div class="pt-4 h-full flex flex-wrap justify-around">
+  {% for page in appPages %} 
+    {% if myRole in page.accessibleBy and page.name != "Profile" and page.name != "Home"%}
+    <button onclick="window.location.href = '{{page.route}}'" class="bg-skyblue text-hard-blue w-32 h-32 lg:w-56 lg:h-56 m-4 flex flex-col items-center justify-center hover:bg-darker-skyblue rounded-xl">
+      <div class="w-full h-full self-center justify-center items-center flex flex-grow max-w-lg">
+        <img src="{{url_for('static', filename=page.icon)}}" class="self-center" width="64" height="64"/>
+      </div>
+      <p class="text-center w-full py-4 font-bold">{{page.name}}</p>
+    </button>
+    {% endif %} 
+  {% endfor %}
+</div>
+{% endblock %}

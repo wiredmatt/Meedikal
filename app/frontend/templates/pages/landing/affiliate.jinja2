@@ -1,0 +1,57 @@
+{% extends "layouts/landing-base.jinja2" %}
+{% from 'components/app/form-field.jinja2' import formField with context %}
+{% block title %}Affiliate{% endblock %}
+
+{% block pageContent %}
+<div class="flex flex-col px-12 justify-center items-center w-full pt-4">
+    <div class="shadow-xl p-4 space-y-2 w-full" id="user-fields">
+        {{formField("ID")}} 
+        {{formField("1st Name") }} 
+        {{formField("2nd Name", '')}}
+        {{formField("1st Surname", '')}} 
+        {{formField("2nd Surname", '')}} 
+        {{formField("Sex", '')}} 
+        {{formField("Genre", '')}}
+        {{formField("Birthdate", '')}}
+        {{formField("Email", '')}} 
+        {{formField("Location", '')}}
+        {{formField("Phone(s)", '')}}
+    </div>
+    <div class="mb-4 mt-4 flex justify-between w-1/2 space-x-10">
+        <button onclick="send()" class="bg-turqoise w-full font-bold text-white text-center text-sm rounded-full py-2">
+          Send
+        </button>
+    </div>
+</div>
+<script>
+    let id = document.getElementById("ID")
+    let name1 = document.getElementById("1st Name")
+    let name2 = document.getElementById("2nd Name")
+    let surname1 = document.getElementById("1st Surname")
+    let surname2 = document.getElementById("2nd Surname")
+    let sex = document.getElementById("Sex")
+    let genre = document.getElementById("Genre")
+    let birthdate = document.getElementById("Birthdate")
+    let email = document.getElementById("Email")
+    let _location = document.getElementById("Location")
+    let phones = document.getElementById("Phone(s)")
+
+    const send = () => {
+        let body = `CI: ${id.value}
+1st Name: ${name1.value}
+2nd Name: ${name2.value}
+1st Surname: ${surname1.value}
+2nd Surname: ${surname2.value}
+Sex: ${sex.value}
+Genre: ${genre.value}
+Birthdate: ${birthdate.value}
+Email: ${email.value}
+Location: ${_location.value}
+Phone(s): ${phones.value}`
+
+        let mail = document.createElement("a");
+        mail.href = `mailto:support@hccompany.com?subject=New%20Afilliation&body=${encodeURIComponent(body)}`;
+        mail.click();
+    }
+</script>
+{% endblock %}

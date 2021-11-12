@@ -3,7 +3,7 @@ $ErrorActionPreference= 'silentlycontinue'
 $Env:NODE_ENV="production" 
 $run = $Env:MEEDIKAL_HAS_RUN_YET
 
-Set-Location backend
+Set-Location app
 
 if ((-not $run) -or ($run -eq 0)) {
     python -m venv venv # create virtual environment #

@@ -1,0 +1,72 @@
+{% macro errorBox(_id="error-box") %}
+<div id="{{_id}}" class="hidden">
+    <p class="text-red-500 font-semibold"></p>
+</div>
+<script>
+    let errorBox = document.getElementById("{{_id}}");
+    let errorText = errorBox.getElementsByTagName('p')[0];
+
+    const showError = (msg) => {
+        errorText.textContent = msg;
+        errorBox.classList.remove("hidden")
+        toggleLoadingModal(true);
+    }
+
+    const hideError = () => {
+        errorText.textContent = '';
+        errorBox.classList.add("hidden")
+    }
+
+    const markFieldError = (field) => {
+        field.classList.add('border-2') 
+        field.classList.add('border-red-200') 
+        field.focus();
+    }
+
+    const unmarkFieldError = (field) => {
+        field.classList.remove('border-2') 
+        field.classList.remove('border-red-200') 
+    }
+
+    const validateLength = (field, length=1, msg='Invalid input.', scroll=0) =>{
+        if(field.value.trim().length < length){
+            markFieldError(field);
+            showError(msg + ` Must be at least ${length} characters long.`)
+            window.scrollTo(0,scroll);
+            return false;
+        }else{
+            unmarkFieldError(field);
+            hideError();
+            return true;
+        }
+    }
+
+    const validateType = (field, _type, msg='Invalid Input.', scroll=0) => {
+        if ((_type === 'numeric' && !parseInt(field.value)) || (_type === 'string' && parseInt(field.value)) || (_type === 'date' && isNaN(new Date(field.value)))) {
+            markFieldError(field);
+            showError(msg + ` Must be ${_type}.`);
+            window.scrollTo(0,scroll);
+            return false;
+        }else{
+            unmarkFieldError(field);
+            hideError();
+            return true;
+        }
+    }
+
+    const handleErrorResponse = async(res) => {
+        
+        let error = await res.json();
+        let msg;
+
+        if (error.extraMessage?.includes('missing')){
+            msg = error.extraMessage.substring(0, error.extraMessage.indexOf(": ") + 2) + error.extraMessage.substring(error.extraMessage.indexOf(".") + 1);
+        }else if (error.error.includes('already exists')){
+            msg = error.error.replace('record', error.extraMessage.substring(0, error.extraMessage.indexOf(".")))
+        }else{
+            msg = error.extraMessage || error.error
+        }
+        showError(msg);
+    }
+</script>
+{% endmacro %}

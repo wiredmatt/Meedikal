@@ -1,0 +1,246 @@
+{% from "components/app/appointment-card.jinja2" import appointmentDetails with context %} 
+{% from "components/app/patient-card.jinja2" import patientCard with context %} 
+{% from "components/app/form-field.jinja2" import formFieldChips with context %} 
+{% extends 'layouts/app-base.jinja2' %} 
+
+{% block title %}Appointments{% endblock %} 
+{% block pageContent %}
+<div class="w-full h-full px-6 pt-4 flex flex-col items-start justify-start space-y-2">
+  <div class="w-full flex items-center justify-center space-x-2">
+    <h3 class="w-1/3 font-bold">Appointment information:</h3>
+    {{appointmentDetails(appointment, branch, doctor)}}
+  </div>
+  <div class="w-full flex items-center justify-center space-x-2">
+    <h3 class="w-1/3 font-bold">Patient information:</h3>
+    {{patientCard(patient, attendsTo, false, doctor)}}
+  </div>
+  <div class="w-full flex items-center justify-center space-x-2">
+    <h3 class="w-1/3 font-bold">Registered Symptoms:</h3>
+    <div class="py-2 w-full h-full flex flex-col border border-turqoise rounded-full">
+        {{formFieldChips('symptom', registeredSymptoms, 'name', 'deleteSymptom', 'icons/delete.svg', true if myRole != 'patient' and me['user']['id'] == doctor['user']['id'] else false, 'addSymptom', true)}}
+    </div>
+  </div>
+  <div class="h-1/3 w-full flex items-center justify-center space-x-2">
+    <h3 class="w-1/3 font-bold">Registered Clinical Signs:</h3>
+    <div class="py-2 w-full h-full flex flex-col border border-turqoise rounded-full">
+        {{formFieldChips('cs', registeredCs, 'name', 'deleteClinicalSign', 'icons/delete.svg', true if myRole != 'patient' and me['user']['id'] == doctor['user']['id'] else false, 'addClinicalSign', true)}}
+    </div>
+  </div>
+  <div class="h-1/3 w-full flex items-center justify-center space-x-2">
+    <h3 class="w-1/3 font-bold">Diagnosed Diseases:</h3>
+    <div class="py-2 w-full h-full flex flex-col border border-turqoise rounded-full">
+      {{formFieldChips('disease', diagnosedDiseases, 'name', 'deleteDisease', 'icons/delete.svg', true if myRole != 'patient' and me['user']['id'] == doctor['user']['id'] else false, 'addDisease', true)}}
+    </div>
+  </div>
+  <div class="h-full w-full flex items-center justify-center pb-5 space-x-2">
+    <h3 class="w-1/3 font-bold">Notes:</h3>
+    <div class="w-full h-full flex border border-turqoise">
+      <textarea id="notes" {% if myRole == 'patient' or me['user']['id'] != doctor['user']['id'] %}readonly{% endif %} class="rounded-lg resize-none w-full h-full">{{attendsTo['notes'] or ''}}</textarea>
+    </div>
+  </div>
+  {% if myRole == 'doctor' and me['user']['id'] == doctor['user']['id'] %}
+    <div class="w-full flex items-center justify-center mt-4 pb-4">
+        <button class="rounded-3xl bg-turqoise text-white font-bold w-64 h-12" onclick="saveNotes()">
+            Save
+        </button>
+    </div>
+  {% endif %}
+  {% if myRole == 'patient' %}
+  <div id="cancel" class="hidden mt-4 mb-4 flex justify-between w-full pb-4">
+    <button onclick="cancelAppointmentConfirm()" class="bg-red-500 w-full font-bold text-white text-center text-sm rounded-full py-2">
+      Cancel
+    </button>
+  </div>
+  {% endif %}
+</div>
+<script>
+  let symptomsContainer = document.getElementById('container-symptom');
+  let csContainer = document.getElementById('container-cs');
+  let diseasesContainer = document.getElementById('container-disease');
+  
+  let ap = {{appointment | tojson | safe}};
+  let patient = {{patient | tojson |safe}};
+  let attendsTo = {{attendsTo | tojson | safe}};
+  let symptoms = {{ registeredSymptoms | tojson | safe}};
+  let clinicalSigns = {{ registeredSymptoms | tojson | safe}};
+  let diseases = {{ diagnosedDiseases | tojson | safe}};
+
+  symptoms = symptoms.map(s => s.name);
+  clinicalSigns = clinicalSigns.map(cs => cs.name);
+  diseases = diseases.map(d => d.name);
+
+  if (myRole === 'patient'){
+    if (currentTimeWithoutTZ().toISOString() < attendsTo.time){ // can cancel appointment
+      document.getElementById("cancel").classList.remove("hidden")
+    }
+  }
+
+  const cancelAppointment = async(id, mode='confirm') => {
+    if (mode === 'confirm'){
+      await fetch (`/api/appointments/attendsTo/${ap.id}/${patient.user.id}`,  {
+        method: 'DELETE',
+        headers: {
+          Accept: "application/json",
+        },
+      });
+      window.location.href = "/app/appointments";
+    }
+    document.getElementById(`wrapper-${id}`).remove();
+  };
+
+  const cancelAppointmentConfirm = () => {
+    let _wrapper = document.createElement('div');
+    _wrapper.id = `wrapper-${ap.id}`;
+    _wrapper.innerHTML = generateConfirmationModal(ap.id, 'cancelAppointment');
+    document.body.appendChild(_wrapper);
+  }
+
+  const addSymptom = async() => {
+    let sy = document.getElementById('new-symptom').value;
+    if (!sy.trim().length) { return; }
+
+    if (!symptoms.includes(sy)){
+      let res = await fetch ('/api/sufferings/registersSy',  {
+        method: 'POST',
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            idAp: ap.id,
+            idPa: patient.user.id,
+            name: sy
+        })
+      });
+      if (res.status === 200){
+        symptoms.push(sy);
+        symptomsContainer.innerHTML += generateSymptomChip(sy);
+        document.getElementById('new-symptom').value = '';
+      }
+    }
+  }
+
+  const deleteSymptom = async(sy) => {
+    let res = await fetch ('/api/sufferings/registersSy',  {
+      method: 'DELETE',
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+          idAp: ap.id,
+          idPa: patient.user.id,
+          name: sy
+      })
+    });
+
+    symptoms = symptoms.filter(s => s !== sy);
+    document.getElementById(sy).remove(); 
+  }
+
+  const addClinicalSign = async() => {
+    let cs = document.getElementById('new-cs').value;
+    if (!cs.trim().length) { return; }
+
+    if (!clinicalSigns.includes(cs)){
+        let res = await fetch ('/api/sufferings/registersCs',  {
+        method: 'POST',
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            idAp: ap.id,
+            idPa: patient.user.id,
+            name: cs
+        })
+      });
+      
+      if (res.status === 200){
+        clinicalSigns.push(cs);
+        csContainer.innerHTML += generateCsChip(cs);
+        document.getElementById('new-cs').value = '';
+      }
+    }
+  }
+
+  const deleteClinicalSign = async(cs) => {
+    await fetch ('/api/sufferings/registersCs',  {
+      method: 'DELETE',
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        idAp: ap.id,
+        idPa: patient.user.id,
+        name: cs
+      })
+    });
+
+    clinicalSigns = clinicalSigns.filter(c => c !== cs);
+    document.getElementById(cs).remove();
+  }
+  
+  const addDisease = async() => {
+    let disease = document.getElementById('new-disease').value;
+    if (!disease.trim().length) { return; }
+
+    if(!diseases.includes(disease)){
+        let res = await fetch ('/api/sufferings/diagnoses',  {
+        method: 'POST',
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          idAp: ap.id,
+          idPa: patient.user.id,
+          name: disease
+        })
+      });
+      if (res.status === 200){
+        diseases.push(disease);
+        diseasesContainer.innerHTML += generateDiseaseChip(disease);
+        document.getElementById('new-disease').value = '';
+      }
+    }
+  }
+
+  const deleteDisease = async(disease) => {
+    await fetch ('/api/sufferings/diagnoses',  {
+      method: 'DELETE',
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        idAp: ap.id,
+        idPa: patient.user.id,
+        name: disease
+      })
+    });
+
+    diseases = diseases.filter(d => d !== disease);
+    document.getElementById(disease).remove();
+  }
+
+  const saveNotes = async() => {
+    let notes = document.getElementById('notes').value;
+
+    await fetch (`/api/appointments/attendsTo/${ap.id}/${patient.user.id}`,  {
+      method: 'PUT',
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        notes: notes
+      })
+    });
+
+    //showOkModal();
+  }
+</script>
+
+{% endblock %}

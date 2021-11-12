@@ -1,0 +1,23 @@
+{% from "components/app/appointment-card.jinja2" import appointmentDetails with context %}
+{% from "components/app/patient-card.jinja2" import patientCard with context %}
+{% extends 'layouts/app-base.jinja2' %}
+
+{% block title %}Appointments{% endblock %}
+{% block pageContent %}
+<div class="w-full h-full px-6 lg:px-10 pt-4 flex flex-col items-start justify-start space-y-2">
+    <h3 class="w-full text-center font-bold">Appointment information:</h3>
+    <div class="w-full flex items-center justify-center">
+        <div class="h-3/4">
+        {{appointmentDetails(appointment, branch, assignedDoctor)}}
+        </div>
+    </div>
+    <h3 class="w-full text-center font-bold">Patients:</h3>
+    <div class="flex flex-col pb-12">
+    {% for atp in attendingPatients %}
+        <div class="h-3/4">
+        {{patientCard(atp['patient'], atp, true, assignedDoctor)}}
+        </div>
+    {% endfor %}
+    </div>
+</div>
+{% endblock %}

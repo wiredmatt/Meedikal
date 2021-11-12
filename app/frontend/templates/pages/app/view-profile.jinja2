@@ -1,0 +1,8 @@
+{% from "components/app/profile.jinja2" import profile with context %} 
+{% extends 'layouts/app-base.jinja2' %} 
+
+{% block title %}Profile{% endblock %}
+
+{% block pageContent %}
+{{profile(user, asRole)}}
+{% endblock %}

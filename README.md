@@ -26,7 +26,7 @@ This project was done as the last activity of the educational program [Sembrando
 
 Some documentation might be in spanish but not yet translated to english or vice-versa, when the development is completed it will get fully translated to both languages. The project is not yet completed but the estimated date for it to be finished is early december.
 
-## Run it!
+## Run it
 
 ### Windows
 

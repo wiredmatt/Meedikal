@@ -31,7 +31,7 @@ def requiresRole(roles:list[str]): # the required roles to execute the action
         def wrapper(id:int,*args, **kwargs): # id comes from the previous deco: requiresAuth
             userRoles = User.getRoles(id)
 
-            if 'idUser' in [k for k in kwargs.keys()]:
+            if 'idUser' in [k for k in kwargs.keys()] and 'self' in roles:
                 if kwargs['idUser'] == id:
                     return f(*args, **kwargs)
 

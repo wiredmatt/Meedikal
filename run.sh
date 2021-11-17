@@ -1,9 +1,9 @@
 export NODE_ENV="production" 
-run = MEEDIKAL_HAS_RUN_YET
 
 cd app
 
-if [!$run || $run -eq 0] {
+if [[ !$MEEDIKAL_HAS_RUN_YET ]] || [[$MEEDIKAL_HAS_RUN_YET -eq 0]]
+then
     python -m venv venv # create virtual environment
 
     . venv/bin/activate # activate virtual environment 
@@ -11,16 +11,15 @@ if [!$run || $run -eq 0] {
 
     mv .example.env .env # replace dotenv file 
     mv config.example.py config.py # replace config file 
-    python util/createDb.py && python util/createAdmin.py # create db and admin
+    python util/db.py && python util/admin.py # create db and admin
     
     cd frontend/static/css
     npm install # install dependencies 
     npm run build # build and minify tailwindcss file 
     cd ../../../
     export MEEDIKAL_HAS_RUN_YET = 1
-}
-else {
+else
     . venv/bin/activate
-}
+fi
 
 gunicorn --bind 0.0.0.0:80 wsgi:app && xdg-open "http://127.0.0.1/"

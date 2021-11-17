@@ -13,7 +13,7 @@ if ((-not $run) -or ($run -eq 0)) {
 
     Move-Item .example.env .env # replace dotenv file #
     Move-Item config.example.py config.py # replace config file #
-    ./util/createDb.py && ./util/createAdmin.py # create db and admin #
+    ./util/db.py && ./util/admin.py # create db and admin #
     
     Set-Location frontend/static/css
     npm install # install dependencies #

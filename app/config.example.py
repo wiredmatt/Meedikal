@@ -18,34 +18,32 @@ class AppPage(Page):
     accessibleBy: list[str]
     icon: str
 
-    def __init__(self, route:str, name:str, accessibleBy:list[str]=['user', 'patient', 'medicalPersonnel', 'doctor', 'administrative'], icon:str=None):
+    def __init__(self, route:str, name:str, accessibleBy:list[str]=['user', 'patient', 'medicalPersonnel', 'doctor', 'medicalAssistant', 'administrative'], icon:str=None):
         super().__init__(route, name)
         self.accessibleBy = accessibleBy
         if icon is not None:
             self.icon = icon
         else:
             self.icon = 'icons/home.svg'
-
+        
 class Config(object):
     DEBUG = False
     TESTING = False
-    SESSION_COOKIE_SAMESITE = 'Strict'
+    ENV = 'production'
     JSON_SORT_KEYS = False
-    SECRET_KEY = 'secretkey' # used to sign and verify jwt tokens
+    SESSION_COOKIE_SAMESITE = 'Strict'
+    SECRET_KEY = 'meedikal' # used to sign and verify jwt tokens
     DATABASE = 'meedikal.db'
     UPLOAD_FOLDER = 'images/'
     Admin = {
         'id': 12345678,
-        'name1': 'Juan',
-        'surname1': 'Perez',
+        'name1': 'john',
+        'surname1': 'doe',
         'sex': 'M',
-        'birthdate': '1992-08-08',
+        'birthdate': '2002-10-24',
         'location': 'Street 123',
-        'email': 'juanperez@gmail.com',
+        'email': 'mateocarriqui7@gmail.com',
         'password': '1234',
-        'name2': 'Marcos',
-        'surname2': 'Gonzalez',
-        'genre': 'Male',
         'active': 1,
     }
     
@@ -53,10 +51,10 @@ class Config(object):
     
     central_data = {
         'address': 'Jorge Canning 2363, Montevideo',
-        'email': 'support@hccompay.com',
+        'email': 'support@hccompany.com',
         'phone': '123-456-7890',
         'google_maps_link': 'https://www.google.com/maps/embed?pb=!1m14!1m8!1m3!1d13095.168728844454!2d-56.1938193!3d-34.8614488!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0xa3c298c9fd703d35!2sSociedad%20M%C3%A9dica%20Universal!5e0!3m2!1sen!2suy!4v1633202238613!5m2!1sen!2suy'
-        }
+    }
 
     role_colors = {
         'user': 'bg-gray-300',
@@ -64,6 +62,7 @@ class Config(object):
         'patient': 'bg-turqoise',
         'medicalPersonnel': 'bg-skyblue',
         'doctor': 'bg-darker-skyblue',
+        'medicalAssistant': 'bg-skyblue',
     }
 
     plans = [
@@ -112,8 +111,10 @@ class Config(object):
     landing_pages = [
         Page(route='/', name='Home'), 
         Page(route='/contact', name='Contact'), 
-        Page(route='/plans', name='Plans')
-        ]
+        Page(route='/plans', name='Plans'),
+        Page(route='/login', name='Login'),
+        Page(route='/affiliate', name='Affiliate')
+    ]
 
     app_pages = [
         AppPage('/app', 'Home', icon='icons/home.svg'),
@@ -124,6 +125,7 @@ class Config(object):
         AppPage('/app/diseases', 'Diseases', icon='icons/diseases.svg'),
         AppPage('/app/clinical-signs', 'Clinical Signs', icon='icons/clinical_signs.svg'),
         AppPage('/app/branches', 'Branches', icon='icons/branches.svg'),
+        AppPage('/app/stats', 'Stats', ['administrative'], icon='icons/stats.svg'),
         AppPage('/app/profile', 'Profile'),
     ]
 
@@ -136,5 +138,6 @@ class StagingConfig(Config):
 class DevelopmentConfig(Config):
     DEBUG = True
     ENV= "development"
+
 class TestingConfig(Config):
     TESTING = True

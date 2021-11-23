@@ -13,4 +13,4 @@ six==1.16.0
 typing-extensions==3.10.0.2
 waitress==2.0.0
 Werkzeug==2.0.1
-dotenv==0.0.5
+python-dotenv==0.19.2

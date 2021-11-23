@@ -28,7 +28,6 @@ def userToReturn(user: User, id:int=0, currentRole:str='', role=None, **kwargs):
         role = parseRole(request)
 
     _user = asdict(user)
-
     phones = []
 
     if user.id == id or currentRole == 'administrative':
@@ -42,10 +41,12 @@ def userToReturn(user: User, id:int=0, currentRole:str='', role=None, **kwargs):
            'phoneNumbers': phones}
 
     if role == 'doctor':
-        hasSpec = DocHasSpec.selectMany({'idDoc': id})
+        hasSpec = DocHasSpec.selectMany({'idDoc': user.id})
 
         if len(hasSpec) > 0:
-            obj['specialties'] = [Specialty.selectOne({'id': sp.idSpec}).title for sp in hasSpec]
+            obj['specialties'] = [asdict(sp) | {'title': Specialty.selectOne({'id': sp.idSpec}).title} for sp in hasSpec]
+        else:
+            obj['specialties'] = []
 
     obj['user'].pop('password', None)
 

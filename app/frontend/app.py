@@ -34,10 +34,10 @@ def profile(id:int, currentRole:str, **kwargs):
 
 @appRouter.get('/profile/<int:idUser>')
 @appRouter.get('/profile/<int:idUser>/<string:asRole>')
-@requiresAuth
+@getCurrentRole
 @userExists()
 def profileById(user:User, asRole:str=None, **kwargs):
-    user = userToReturn(user, **kwargs, role=asRole)
+    user = userToReturn(user, role=asRole, **kwargs)
     return render_template(f'{baseDirApp}/view-profile.jinja2', user=user, asRole=asRole, readOnly=True)
 
 @appRouter.get('/appointments')

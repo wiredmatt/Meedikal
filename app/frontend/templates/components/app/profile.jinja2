@@ -2,7 +2,7 @@
 {% from "components/app/form-field.jinja2" import formField, formFieldChips with context %} 
 {% from "components/app/error-box.jinja2" import errorBox with context %} 
 
-{% macro profile(user, currentRole, roleActionFn='swapRole', roleActionIcon='icons/swap.svg', saveFn='updateUser') %}
+{% macro profile(user, role, roleActionFn='swapRole', roleActionIcon='icons/swap.svg', saveFn='updateUser') %}
 <div class="w-full lg:px-10 mt-2 mb-4">
     <div class="bg-white rounded-xl flex flex-col w-full">
       <div class="w-64 lg:w-96 self-center">
@@ -23,7 +23,7 @@
               {% if readOnly %}
                 {{chip(r, "white", True, roleColors[r])}}
                 {% else %}
-                  {% if currentRole == r %}
+                  {% if role == r %}
                     {{chip(r, "white", True, roleColors[r])}}
                   {% else %}
                     {{chip(r, "white", True, roleColors[r], chipAction(r, roleActionFn, roleActionIcon))}} 
@@ -46,7 +46,7 @@
         {{formField("Location", user.get('user', {}).get('location', '') or '', readOnly)}}
         {{formField("Status", "active" if user.get('user', {}).get('active', True) else "inactive", readOnly) }}
         
-        {% if currentRole == 'doctor' %}
+        {% if role == 'doctor' %}
           {{formFieldChips('Specialties', user.get('specialties', []), 'title') }}  
         {% endif %}
 
@@ -72,8 +72,8 @@
         {% endif %}
       {% endif %}
     </div>
-    {% if currentRole not in ['administrative', 'create', 'update'] and currentRole != none %}
-    <a href="/app/appointments{{ '/' + currentRole + '/' + user.get('user', {}).get('id', -1)|string if me['user']['id'] != user.get('user', {}).get('id', -1)  else ''}}">
+    {% if role not in ['administrative', 'create', 'update'] and role != none %}
+    <a href="/app/appointments{{ '/' + role + '/' + user.get('user', {}).get('id', -1)|string if me['user']['id'] != user.get('user', {}).get('id', -1)  else ''}}">
       <button class="mt-2 mb-1 pt-2 pb-2 bg-turqoise w-full font-bold text-white text-center text-sm rounded-full py-2">
         View Appointments
       </button>

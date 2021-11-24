@@ -25,15 +25,15 @@
 
   if (myRole === 'administrative' || myRole === 'doctor'){
     _headers.push('Actions')
+    
+    document.getElementById('new-suffering').addEventListener('click', () =>{
+      if (sufferingType === 'clinicalSign'){
+        sufferingType = 'clinical-sign'
+      }
+
+      window.location.href = `/app/create-${sufferingType}`
+    });
   }
-
-  document.getElementById('new-suffering').addEventListener('click', () =>{
-    if (sufferingType === 'clinicalSign'){
-      sufferingType = 'clinical-sign'
-    }
-
-    window.location.href = `/app/create-${sufferingType}`
-  });
 
   const updateSuffering = (id) => {
     if (sufferingType === 'clinicalSign'){

@@ -5,7 +5,7 @@
 <h1 align="center">Meedikal</h1>
 </h1>
 <p align="center">
-  [![Meedikal Demo](https://raw.githubusercontent.com/system32uwu/Meedikal/third-release/documentation/output.gif)](https://www.youtube.com/watch?v=1RQTNWUm-f8)
+[![Meedikal Demo](https://raw.githubusercontent.com/system32uwu/Meedikal/third-release/documentation/output.gif)](https://www.youtube.com/watch?v=1RQTNWUm-f8)
 </p>
 
 ## Meedikal - Digitization of the healthcare system

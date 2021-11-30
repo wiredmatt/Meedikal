@@ -1,4 +1,14 @@
-# Meedikal - Digitization of the healthcare system
+<p align="center">
+  <img width="200" height="200" src="https://raw.githubusercontent.com/system32uwu/Meedikal/third-release/documentation/M.png">
+</p>
+
+<h1 align="center">Meedikal</h1>
+</h1>
+<p align="center">
+  [![Meedikal Demo](https://raw.githubusercontent.com/system32uwu/Meedikal/third-release/documentation/output.gif)](https://www.youtube.com/watch?v=1RQTNWUm-f8)
+</p>
+
+## Meedikal - Digitization of the healthcare system
 
 As the title suggests, the purpose of this project is to offer a solution to the current  problems of our healthcare system, such as the misplacing or complete loss of important documentation, patients being unaware regarding the rescheduling or cancellation of their appointments, arriving at the drugstore just to find out that your medicine is out of stock, not being able to check your own health record at anytime, and many more problems and flaws this antique system has.
 
@@ -6,7 +16,7 @@ There's already a solution to this: EHR (Electronic Health Record), and actually
 
 The objective is to offer a solution that allows doctors, medical assistants, and patients to develop the same tasks and activities they do (writing and reading patients' medical history, taking note of patients' status, updating their pathological conditions, doing a follow-up of their treatments, saving the results of their exams, etc), but with the adventage that the information will be saved in a digital storage system (a database), thus, assuring the data, and making it easy to access, manipulate and update at any place and at any time by any of the users.
 
-# Meedikal - Digitalización del sistema de salud
+## Meedikal - Digitalización del sistema de salud
 
 Como indica el título el propósito de mi desafío es ofrecer una solución a los problemas de gestión que sufre el sistema de salud: extravío y pérdida de documentos e historias médicas, que a veces se cancelen o se posterguen las consultas y no nos enteremos, tener que ir a sacar medicamentos pero que no tengan stock, no poder tener nuestra historia clínica disponible si la queremos ver o la queremos llevar a una consulta privada, por decir algunos de los muchos problemas y trabas que tiene el sistema que se usa actualmente.
 

@@ -1,8 +1,11 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies
-frontend/node_modules
-frontend/.pnp
+app/frontend/styles.css
+app/frontend/tailwind.css
+app/frontend/tailwind-prod.css
+app/frontend/node_modules
+app/frontend/.pnp
 .pnp.js
 
 # testing

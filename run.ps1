@@ -17,7 +17,8 @@ if ((-not $run) -or ($run -eq 0)) {
     
     Set-Location frontend/static/css
     npm install # install dependencies #
-    npm run build # build and minify tailwindcss file #
+    npm run styles:build # build and minify tailwindcss file #
+    npm run tailwind:build # build and minify tailwindcss file #
     Set-Location ../../../
     $Env:MEEDIKAL_HAS_RUN_YET = 1
 }

@@ -4,8 +4,8 @@
   "description": "styling for meedikal frontend",
   "main": "tailwind.config.js",
   "scripts": {
-    "tailwind:build": "postcss tailwind.css -o tailwind-prod.css",
-    "styles:build": "postcss styles-dev.css -o styles.css"
+    "styles:build": "postcss styles-dev.css -o styles.css",
+    "tailwind:build": "postcss styles.css -o tailwind-prod.css"
   },
   "keywords": [],
   "author": "Mateo Carriqui <mateocarriqui7@gmail.com>",

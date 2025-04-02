@@ -15,7 +15,8 @@ then
     
     cd frontend/static/css
     npm install # install dependencies 
-    npm run build # build and minify tailwindcss file 
+    npm run styles:build # build and minify tailwindcss file 
+    npm run tailwind:build # build and minify tailwindcss file 
     cd ../../../
     export MEEDIKAL_HAS_RUN_YET = 1
 else
